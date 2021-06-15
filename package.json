@@ -2,9 +2,9 @@
   "name": "dalmuti",
   "version": "1.0.0",
   "description": "dalmuti online game using socket.io",
-  "main": "index.js",
+  "main": "app.js",
   "scripts": {
-    "start": "pm2-runtime start ecosystem.config.js --env production"
+    "start": "pm2 start app.js -s max"
   },
   "author": "MG",
   "license": "ISC",
