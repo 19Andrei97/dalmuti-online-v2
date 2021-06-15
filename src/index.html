@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <title>The Great Dalmuti</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <link rel="stylesheet" href="style.css">
+
+  <!-- Bootstrap -->
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="./js/main.js"></script>
+</head>
+
+<body>
+
+  <!-- ERROR MESSAGES -->
+  <!-- Blank input -->
+  <div id="noName" style="z-index: 1200; max-width: 500px;position: absolute; left: 0; right: 0;display: none;"
+    class="fixed-bottom alert alert-danger fade show mx-auto" role="alert">
+    <strong>Attention!</strong> Write something!
+  </div>
+  <div id="error-msg-bg" class="container position-absolute errorMSG" style="display:none;">
+    <h2 id="error-msg"></h2>
+  </div>
+
+  <!-- Main Room Start -->
+  <div id="waiting-room">
+    <div style="width: fit-content;height: fit-content;"></div>
+    <!-- Title -->
+    <div class="container-fluid bg-secondary2">
+      <div class="row">
+        <div class="col-7 col-sm-9 p-4 titleMedia" style="border-bottom: 5px solid var(--secondary1);"><b id="title">The Great
+            Dalmuti</b></div>
+        <div id="newName" data-toggle="modal" style="font-size: x-large;"
+          class="nickname col-5 col-sm-3 text-center p-4 bg-secondary1 font-weight-bold" data-target="#id02">placeholder</div>
+      </div>
+    </div>
+
+    <!-- Listing Room-->
+    <div class="row-sm-10 text-center">
+      <button class="btn bg-alert1 p-4 w-100 mt-2 col-9 col-sm-7 font-weight-bold" data-toggle="modal"
+        data-target="#id01" id="btnCreate">Create
+        Room</button>
+      <button class="btn bg-alert2 p-4 w-100 mt-2 col-9 col-sm-3 font-weight-bold" data-toggle="modal"
+        data-target="#id03" id="btnJoin">Join Room</button>
+    </div>
+
+    <div class="row-sm-10 text-center">
+      <div id="room-list" style="display: inline-block;padding: 0;white-space: break-spaces;" class="col-9 col-sm-10"></div>
+    </div>
+
+    <!-- Create Room Modal -->
+    <div class="modal fade" id="id01">
+      <div class="modal-dialog">
+        <div class="modal-content">
+
+          <!-- Modal Header -->
+          <div class="modal-header">
+            <h4 class="modal-title" id="create">Create Room</h4>
+            <button class="close" data-dismiss="modal">&times;</button>
+          </div>
+
+          <!-- Modal body -->
+          <div class="modal-body">
+            <form id="form-create-room">
+              <div class="form-group">
+                <label id="new-room-name-lang" for="new-room-name" class="col-form-label">Enter the room name:</label>
+                <input autocomplete="off" type="text" id="new-room-name" class="form-control">
+              </div>
+              <div class="form-group pl-2">
+                <div class="form-check">
+                  <input class="form-check-input" type="checkbox" value="" id="hide">
+                  <label id="hideLang" class="form-check-label" for="hide">
+                    Hide room
+                  </label>
+                </div>
+              </div>
+            </form>
+          </div>
+
+          <!-- Modal footer -->
+          <div class="modal-footer">
+            <button class="btn bg-success1" data-dismiss="modal" id="new-room-create">Create</button>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- Change Name Modal-->
+    <div class="modal fade" id="id02">
+      <div class="modal-dialog">
+        <div class="modal-content">
+
+          <!-- Modal Header -->
+          <div class="modal-header">
+            <h4 id="titleNickModal" class="modal-title">Update nickname</h4>
+            <button  class="close" data-dismiss="modal">&times;</button>
+          </div>
+
+          <!-- Modal body -->
+          <div class="modal-body">
+            <form id="form-set-nickname">
+              <div class="form-group">
+                <label id="set-nickname-lang" for="set-nickname" class="col-form-label">Enter a new nickname:</label>
+                <input autocomplete="off" type="text" id="set-nickname" class="form-control">
+              </div>
+              <label id="chooseLang" for="set-nickname" class="col-form-label">Choose language:</label>
+              <div class="form-group">
+                <a href="#" onclick="setLanguage('en')">English</a>
+                <a href="#" onclick="setLanguage('it')">Italiano</a>
+                <a href="#" onclick="setLanguage('bg')">Български</a>
+              </div>
+            </form>
+          </div>
+
+
+          <!-- Modal footer -->
+          <div class="modal-footer">
+            <button  class="btn bg-success1" data-dismiss="modal" id="set-nickname-ok">Save</button>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- Join Room Modal-->
+    <div class="modal fade" id="id03">
+      <div class="modal-dialog">
+        <div class="modal-content">
+
+          <!-- Modal Header -->
+          <div class="modal-header">
+            <h4 class="modal-title" id="join">Join Room</h4>
+            <button  class="close" data-dismiss="modal">&times;</button>
+          </div>
+
+          <!-- Modal body -->
+          <div class="modal-body">
+            <form>
+              <div class="form-group">
+                <label id="joinRoomIdLang" for="joinRoomId" class="col-form-label">Enter room name:</label>
+                <input autocomplete="off" type="text" id="joinRoomId" class="form-control">
+              </div>
+            </form>
+          </div>
+
+          <!-- Modal footer -->
+          <div class="modal-footer">
+            <button  class="btn bg-success1" data-dismiss="modal" id="joinRoom">Join</button>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Info Box -->
+  <div class="fixed-bottom alert bg-secondary1 alert-dismissible fade show mx-2" role="alert">
+    <strong id="info">Information</strong>
+    <a id="howTo" class="ml-2" target="_blank" href="/help">How to play?</a>
+    <button  class="close" data-dismiss="alert" aria-label="Close">
+      <span aria-hidden="true">&times;</span>
+    </button>
+  </div>
+</body>
+
+<script>
+  function setLanguage(lang) {
+    localStorage.setItem('language', lang);
+    location.reload();
+  }
+</script>
+
+</html>

@@ -1,0 +1,522 @@
+html,
+body {
+  height: 100vh;
+}
+
+body {
+  background-color: var(--secondary2) !important;
+}
+
+.modal {
+  overflow: unset !important;
+}
+
+.game-room {
+  background-color: azure;
+  cursor: pointer;
+}
+
+.playerSlot {
+  height: 160px;
+  background-color: var(--secondary1);
+  font-size: larger;
+  font-weight: bold;
+  z-index: -3;
+  margin-left: 0.25rem;
+  margin-right: 0.25rem;
+  padding-top: 1.5rem;
+  padding-bottom: 1.5rem;
+}
+
+.players {
+  z-index: -1;
+}
+
+.top {
+  z-index: 100 !important;
+}
+
+.currentTurn {
+  background-color: #5f9ea0 !important;
+}
+
+.greaterDalmuti {
+  background: url(/icons/greaterDalmuti.png) no-repeat 50%;
+  background-size: contain;
+  opacity: 0.3;
+  z-index: -2;
+  background-position-y: center;
+  height: 100%;
+  width: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.lesserDalmuti {
+  background: url(/icons/lesserDalmuti.png) no-repeat 50%;
+  background-size: contain;
+  opacity: 0.3;
+  z-index: -2;
+  background-position-y: center;
+  height: 100%;
+  width: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.merchant {
+  background: url(/icons/merchant.png) no-repeat 50%;
+  background-size: contain;
+  opacity: 0.3;
+  z-index: -2;
+  background-position-y: center;
+  height: 100%;
+  width: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.lesserPeon {
+  background: url(/icons/lesserPeon.png) no-repeat 50%;
+  background-size: contain;
+  opacity: 0.3;
+  z-index: -2;
+  background-position-y: center;
+  height: 100%;
+  width: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.greaterPeon {
+  background: url(/icons/greaterPeon.png) no-repeat 50%;
+  background-size: contain;
+  opacity: 0.4;
+  z-index: -2;
+  background-position-y: center;
+  height: 100%;
+  width: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+a {
+  margin-left: 10px;
+}
+.gg-crown {
+  display: inline-block !important;
+  bottom: 3px;
+}
+
+.chatStyle {
+  overflow-y: auto;
+  height: calc(100% - 39.5px);
+  overflow-wrap: break-word;
+  padding-bottom: 20px;
+}
+
+.errorMSG {
+  z-index: 1000;
+  left: 50%;
+  top: 40%;
+  background-color: var(--primary2);
+  transform: translateX(-50%);
+  width: fit-content !important;
+  color: white;
+}
+
+.btn.disabled,
+.btn:disabled {
+  cursor: not-allowed !important;
+  opacity: 0.35 !important;
+}
+
+.cardSel {
+  box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+}
+
+.material-icons {
+  cursor: pointer;
+}
+
+.material-icons:hover {
+  opacity: 0.75;
+}
+
+/* .cardsAnimation {
+  animation-name: muvingUp;
+  animation-duration: .5s;
+  animation-iteration-count: 1;
+  animation-timing-function: ease;
+  animation-fill-mode: forwards;
+  animation-delay: .1s;
+}
+
+@keyframes muvingUp {
+  0%   {bottom:0px;opacity: 100%;}
+  100% {bottom:30px;opacity: 0%;}
+} */
+
+.selected {
+  border: 3px solid rgb(0, 84, 240) !important;
+}
+
+.pointsDiv {
+  padding-left: 20px;
+  font-weight: bold;
+  height: fit-content;
+  padding-top: 10px;
+}
+
+.bg-success1 {
+  background-color: var(--success1) !important;
+}
+.bg-success1:hover {
+  background-color: var(--success2) !important;
+}
+
+.bg-primary2 {
+  background-color: var(--primary2) !important;
+}
+.bg-primary2:hover {
+  background-color: var(--primary3) !important;
+}
+
+.bg-primary1 {
+  background-color: var(--primary1) !important;
+  color: white !important;
+}
+.bg-primary1:hover {
+  background-color: var(--primary2) !important;
+}
+
+.bg-secondary1 {
+  background-color: var(--secondary1);
+}
+.bg-secondary1:hover {
+  background-color: #ecd4ad;
+}
+
+.bg-secondary2 {
+  background-color: var(--secondary2);
+}
+
+.bg-alert1 {
+  background-color: var(--alert1) !important;
+}
+.bg-alert1:hover {
+  background-color: var(--alert2) !important;
+}
+
+.bg-alert2 {
+  background-color: var(--alert2) !important;
+}
+.bg-alert2:hover {
+  background-color: var(--alert3) !important;
+}
+
+:root {
+  --success1: #81b29a;
+  --success2: #aeebcd;
+  --alert1: #e07a5f;
+  --alert2: #df907a;
+  --alert3: #e9a491;
+  --primary1: #3d405b;
+  --primary2: #6d708a;
+  --primary3: #a2a6c5;
+  --secondary2: #f4f1de;
+  --secondary1: #f2cc8f;
+}
+.flip-card-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transition: transform 0.6s;
+  transform-style: preserve-3d;
+  box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
+}
+
+.flip-card .flip-card-inner.active {
+  transform: rotateY(180deg);
+}
+
+.flip-card-front,
+.flip-card-back {
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+}
+
+.flip-card-back {
+  position: absolute;
+  right: 0;
+  top: 0;
+  filter: brightness(1.2);
+  transform: rotateY(180deg);
+  border-radius: 8px !important;
+}
+
+.cards {
+  margin-left: -50px;
+  border-radius: 8px !important;
+  filter: brightness(1.2);
+}
+
+/* CARDS NAMES */
+
+.backCard {
+  background: url(/icons/img-cover.jpg) no-repeat;
+  height: 160px !important;
+  background-size: 110px;
+  background-position-x: 50%;
+  background-position-y: 50%;
+  width: 102px !important;
+  border-radius: 8px !important;
+}
+
+.knight {
+  background: url(/icons/img-cards.jpg) no-repeat 50%;
+  height: 160px !important;
+  background-size: 500px;
+  width: 102px !important;
+}
+
+.baroness {
+  background: url(/icons/img-cards.jpg) no-repeat 0%;
+  height: 160px !important;
+  background-size: 500px;
+  width: 102px !important;
+}
+
+.jolly {
+  background: url(/icons/img-cards.jpg) no-repeat;
+  height: 160px !important;
+  background-size: 500px;
+  background-position-x: 0%;
+  width: 102px !important;
+}
+
+.dalmuti {
+  background: url(/icons/img-cards.jpg) no-repeat;
+  height: 160px !important;
+  background-size: 500px;
+  background-position-x: 50%;
+  width: 102px !important;
+}
+
+.archbishop {
+  background: url(/icons/img-cards.jpg) no-repeat;
+  height: 160px !important;
+  background-size: 500px;
+  background-position-x: 75%;
+  width: 102px !important;
+}
+
+.marshal {
+  background: url(/icons/img-cards.jpg) no-repeat;
+  height: 160px !important;
+  background-size: 500px;
+  background-position-x: 100.1%;
+  width: 102px !important;
+}
+
+.mason {
+  background: url(/icons/img-cards.jpg) no-repeat;
+  height: 160px !important;
+  background-size: 500px;
+  background-position-x: 100.1%;
+  background-position-y: 50%;
+  width: 102px !important;
+}
+
+.seamstress {
+  background: url(/icons/img-cards.jpg) no-repeat;
+  height: 160px !important;
+  background-size: 500px;
+  background-position-x: 75%;
+  background-position-y: 50%;
+  width: 102px !important;
+}
+
+.abbess {
+  background: url(/icons/img-cards.jpg) no-repeat;
+  height: 160px !important;
+  background-size: 500px;
+  background-position-x: 25%;
+  background-position-y: 50%;
+  width: 102px !important;
+}
+
+.cook {
+  background: url(/icons/img-cards.jpg) no-repeat;
+  height: 160px !important;
+  background-size: 500px;
+  background-position-x: 0;
+  background-position-y: 100%;
+  width: 102px !important;
+}
+
+.shepherdess {
+  background: url(/icons/img-cards.jpg) no-repeat;
+  height: 160px !important;
+  background-size: 500px;
+  background-position-x: 25%;
+  background-position-y: 100%;
+  width: 102px !important;
+}
+
+.stonecutter {
+  background: url(/icons/img-cards.jpg) no-repeat;
+  height: 160px !important;
+  background-size: 500px;
+  background-position-x: 50%;
+  background-position-y: 100%;
+  width: 102px !important;
+}
+
+.peasant {
+  background: url(/icons/img-cards.jpg) no-repeat;
+  height: 160px !important;
+  background-size: 500px;
+  background-position-x: 75.4%;
+  background-position-y: 100%;
+  width: 102px !important;
+}
+
+.fontMediaSlots {
+  font-size: medium;
+}
+
+.float {
+  display: none;
+}
+
+.chatStatDiv {
+  height: 100%;
+}
+
+.chatDiv {
+  display: none;
+}
+
+.fieldMedia {
+  height: 25%;
+}
+
+.fieldCards {
+  margin-left: -30px !important;
+}
+
+@media only screen and (max-width: 1000px) and (min-width: 600px) {
+  .flip-card {
+    margin-left: 50px !important;
+    transform: scale(0.9) !important;
+  }
+
+  .fieldCards {
+    margin-left: -50px !important;
+  }
+}
+
+
+@media only screen and (max-width: 600px) {
+  .chatStatDiv {
+    display: none;
+  }
+  .flip-card {
+    margin-left: 50px !important;
+    transform: scale(0.7) !important;
+  }
+
+  .fieldCards {
+    margin-left: -50px !important;
+  }
+
+  .titleMedia {
+    font-size: small;
+  }
+
+  .nameMedia {
+    margin-top: 1vh;
+  }
+
+  .playerSlot {
+    background-color: var(--secondary1);
+    font-size: larger;
+    font-weight: bold;
+    z-index: -3;
+    padding: 0.2rem !important;
+    margin: 0px !important;
+  }
+
+  .fontMediaSlots {
+    font-size: small;
+  }
+
+  .players {
+    font-size: smaller;
+  }
+
+  .cards {
+    margin-left: -60px;
+    transform: scale(0.8);
+    margin-bottom: -20px;
+  }
+
+  .float {
+    display: block;
+    position: fixed;
+    width: 40px;
+    height: 40px;
+    bottom: 20px;
+    right: 20px;
+    background-color: #0c9;
+    color: #fff;
+    border-radius: 50px;
+    text-align: center;
+    box-shadow: 2px 2px 3px #999;
+    z-index: 102;
+  }
+
+  .my-float {
+    margin-top: 22px;
+  }
+
+  .chatStatDivMedia {
+    z-index: 101;
+    display: block !important;
+    position: fixed !important;
+    height: 70vh !important;
+    border-radius: 10px;
+    background-color: var(--alert3);
+    top: 0px;
+    width: 100%;
+    padding: 20px !important;
+    margin-top: 15%;
+    box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+  }
+
+  .chatDiv {
+    display: none !important;
+  }
+
+  .chatActive {
+    transform: scale(1.2);
+  }
+
+  #statistics {
+    padding-top: 0px !important;
+  }
+
+  .pointsDiv {
+    padding-top: 0px !important;
+    font-weight: bold;
+  }
+  .fieldMedia {
+    height: fit-content !important;
+  }
+}

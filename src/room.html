@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+    <title>The Great Dalmuti</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- Custom Style -->
+    <link rel="stylesheet" href="../style.css">
+
+    <!-- Icons -->
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    <link href='https://css.gg/crown.css' rel='stylesheet'>
+
+    <!-- Bootstrap -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+    <script src="../socket.io/socket.io.js"></script>
+    <script src="../js/room.js"></script>
+    <script src="../js/main.js"></script>
+</head>
+
+<body>
+
+
+    <!-- ERROR MESSAGES -->
+    <div id="error-msg-bg" class="container position-absolute errorMSG" style="display:none;">
+        <h2 id="error-msg"></h2>
+    </div>
+
+    <!-- Game Room Start -->
+    <div id="game-room">
+        <!-- Title -->
+        <div class="container text-center" style="padding-top: 0.5em;">
+            <div>
+                <h3 id="room-title" style="margin-bottom: 0;font-weight: bolder;">Room name</h3>
+            </div>
+            <div class="nickname text-secondary">Your Name</div>
+        </div>
+
+        <!-- Game and chat -->
+        <div class="container-fluid" style="height:90vh">
+
+            <div class="row h-100">
+                <!-- Players slots -->
+                <div class="col-sm-9">
+                    <!-- Upper 4 players -->
+                    <div class="row justify-content-md-center" style="z-index: -4;">
+                        <div class="h-100 col-3 col-sm-2 text-center rounded playerSlot">
+                            <div class="player0"></div>
+                            <div class="players" id="player0"><i data-toggle="modal" data-target="#shareRoom"
+                                    class="material-icons" style="font-size:36px">person_add</i></div>
+                        </div>
+                        <div class="h-100 col-3 col-sm-2 text-center rounded playerSlot">
+                            <div class="player1"></div>
+                            <div class="players" id="player1"><i data-toggle="modal" data-target="#shareRoom"
+                                    class="material-icons" style="font-size:36px">person_add</i></div>
+                        </div>
+                        <div class="h-100 col-3 col-sm-2 text-center rounded playerSlot">
+                            <div class="player2"></div>
+                            <div class="players" id="player2"><i data-toggle="modal" data-target="#shareRoom"
+                                    class="material-icons" style="font-size:36px">person_add</i></div>
+                        </div>
+                        <div class="h-100 col-3 col-sm-2 text-center rounded playerSlot">
+                            <div class="player3"></div>
+                            <div class="players" id="player3"><i data-toggle="modal" data-target="#shareRoom"
+                                    class="material-icons" style="font-size:36px">person_add</i></div>
+                        </div>
+                    </div>
+                    <!-- Field -->
+                    <div class="fieldMedia row justify-content-center">
+                        <div id="whoPlayed" class="w-100 pointsDiv text-center"></div>
+                        <div id="field-section"
+                            style="perspective: 1000px;width: 102px !important;height: 160px !important;"
+                            class="flip-card justify-content-center align-content-center d-flex">
+                        </div>
+                    </div>
+                    <!-- Lower 4 players -->
+                    <div class="row justify-content-md-center" style="z-index: -4;">
+                        <div class="h-100 col-3 col-sm-2 text-center rounded playerSlot">
+                            <div class="player4"></div>
+                            <div class="players" id="player4"><i data-toggle="modal" data-target="#shareRoom"
+                                    class="material-icons" style="font-size:36px">person_add</i></div>
+                        </div>
+                        <div class="h-100 col-3 col-sm-2 text-center rounded playerSlot">
+                            <div class="player5"></div>
+                            <div class="players" id="player5"><i data-toggle="modal" data-target="#shareRoom"
+                                    class="material-icons" style="font-size:36px">person_add</i></div>
+                        </div>
+                        <div class="h-100 col-3 col-sm-2 text-center rounded playerSlot">
+                            <div class="player6"></div>
+                            <div class="players" id="player6"><i data-toggle="modal" data-target="#shareRoom"
+                                    class="material-icons" style="font-size:36px">person_add</i></div>
+                        </div>
+                        <div class="h-100 col-3 col-sm-2 text-center rounded playerSlot">
+                            <div class="player7"></div>
+                            <div class="players" id="player7"><i data-toggle="modal" data-target="#shareRoom"
+                                    class="material-icons" style="font-size:36px">person_add</i></div>
+                        </div>
+                    </div>
+                    <!-- User Hand -->
+                    <div class="row justify-content-center">
+                        <button class="btn bg-alert1 col-sm-5 font-weight-bold" id="play-btn"
+                            style="width:100%; margin: 5px;">PASS</button>
+                        <button class="btn bg-success1 col-sm-5 font-weight-bold" id="ready-btn"
+                            style="width:100%; margin: 5px;">READY</button>
+                    </div>
+                    <div class="row h-25">
+                        <div id="hand" class="d-flex flex-row flex-wrap" style="margin-left: 70px;"></div>
+                    </div>
+                </div>
+                <!-- Chat & Statistics -->
+                <div class="chatStatDiv col-sm-3">
+                    <div id="chatDivId" class="row" style="height: 60vh; padding: inherit;">
+                        <div id="chat-messages" class="chatStyle"></div>
+                        <div class="input-group mb-3">
+                            <input type="text" class="form-control" id="message-input" autocomplete="off"
+                                aria-label="Message" aria-describedby="basic-addon2">
+                            <div class="input-group-append">
+                                <button id="form-chatting" class="btn btn-outline-secondary">Send</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="text-center" style="padding-top: 20px;font-size: x-large;"><strong>Leaderboard</strong>
+                    </div>
+                    <div id="statistics" class="row text-center"></div>
+                </div>
+            </div>
+        </div>
+        <!-- Share Room Modal-->
+        <div class="modal fade bd-example-modal-lg" id="shareRoom">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+
+                    <!-- Modal Header -->
+                    <div class="modal-header">
+                        <h4 id="shareTitle" class="modal-title">Share Room</h4>
+                        <button class="close" data-dismiss="modal">&times;</button>
+                    </div>
+
+                    <!-- Modal body -->
+                    <div class="modal-body">
+                        <form>
+                            <div class="form-group row">
+                                <label id="roomIdShareLang" for="roomIdShare" class="col-sm-5 col-form-label">Share the
+                                    room code with your friends:</label>
+                                <div class="col-sm-7">
+                                    <input style="background-color: rgb(230, 230, 230);
+                                    padding-left: 10px;" type="dtext" id="roomIdShare" readonly
+                                        class="form-control-plaintext rounded" value="">
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Modal footer -->
+                    <div class="modal-footer">
+                        <button class="btn bg-alert1" id="close" data-dismiss="modal">Close</button>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="carouselExampleControls" data-interval="false" class="carousel slide chatStatDivMedia chatDiv"
+        data-ride="carousel">
+        <div class="carousel-inner">
+            <div class="carousel-item active">
+                <div id="chatDivIdMedia" class="container" style="height: 60vh; padding: inherit;">
+                    <div id="chat-messages-media" class="chatStyle"></div>
+                    <div class="input-group mb-3">
+                        <input type="text" class="form-control" id="message-input-media" autocomplete="off"
+                            aria-label="Message" aria-describedby="basic-addon2">
+                        <div class="input-group-append">
+                            <button id="form-chatting-media" class="btn btn-outline-secondary">Send</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="carousel-item">
+                <div class="carousel-item active">
+                    <div class="text-center" style="padding-bottom: 10px;font-size: x-large;"><strong>Leaderboard</strong></div>
+                    <div id="statistics-media" class="row text-center"></div>
+                </div>
+            </div>
+        </div>
+        <a class="carousel-control-prev" href="#carouselExampleControls" style="margin: 0px;width:unset;" role="button"
+            data-slide="prev">
+            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+            <span class="sr-only">Previous</span>
+        </a>
+        <a class="carousel-control-next" href="#carouselExampleControls" style="margin: 0px;width:unset;" role="button"
+            data-slide="next">
+            <span class="carousel-control-next-icon" aria-hidden="true"></span>
+            <span class="sr-only">Next</span>
+        </a>
+    </div>
+    <div id="chatMedia" href="#" class="float">
+        <i class="material-icons my-float" style="color:white;margin-top: 1.5vh;font-size: inherit!important;">menu</i>
+    </div>
+</body>
+
+</html>
