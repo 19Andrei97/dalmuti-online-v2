@@ -4,7 +4,8 @@
   "description": "dalmuti online game using socket.io",
   "main": "app.js",
   "scripts": {
-    "start": "pm2 start app.js --watch"
+    "preinstall": "npm install pm2 -g",
+    "start": "pm2-runtime start app.js --watch"
   },
   "author": "MG",
   "license": "ISC",
