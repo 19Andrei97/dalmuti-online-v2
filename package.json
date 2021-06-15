@@ -4,7 +4,7 @@
   "description": "dalmuti online game using socket.io",
   "main": "app.js",
   "scripts": {
-    "start": "pm2 start app.js -s max"
+    "start": "pm2 start app.js"
   },
   "author": "MG",
   "license": "ISC",
