@@ -234,7 +234,6 @@ $(function () {
       $("#ready-btn").removeClass("disabled");
       $("#home").removeClass("disabled");
     } else {
-      // start
       $("#ready-btn").addClass("disabled");
       $("#home").addClass("disabled");
       $("#ready-btn").text(language.ready);
@@ -496,9 +495,15 @@ $(function () {
         .parent()
         .removeClass("top");
       $("#player" + i).empty();
+      $("#player" + i).prev().removeClass();
     }
 
     if (roomData.leaderBoard && roomData.game.state === game_state.WAITING) {
+      if(Object.keys(roomData.sockets).length > roomData.leaderBoard.length) {
+        for (const [sid, user] of Object.entries(roomData.sockets)) {
+          if (!roomData.leaderBoard.find((el) => el[2] === sid)) roomData.leaderBoard.push([0, user.nickname, sid, 'merchant'])
+        }
+      }
       roomData.leaderBoard.forEach((val, i) => {
         $("#player" + i).append(
           $("<div id=" + val[2] + "><b>" + val[1] + "</b></div>"),

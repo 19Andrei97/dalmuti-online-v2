@@ -979,11 +979,19 @@ io.on("connection", (socket) => {
   socket.on("disconnect", () => {
     user_count--;
     console.log(
-      "\x1b[31mDISCONNECTED:\x1b[0m",
+      "DISCONNECTED:",
       socket.userData.nickname + " disconnected from server"
     );
 
     if (roomsInfo.rooms.open.hasOwnProperty(socket.userData.cur_room)) {
+      if(roomsInfo.rooms.open[socket.userData.cur_room].leaderBoard){
+        let index = 10
+        roomsInfo.rooms.open[socket.userData.cur_room].leaderBoard.forEach((val, i)=> {
+          if(val[2] === socket.id) index = i
+        })
+        roomsInfo.rooms.open[socket.userData.cur_room].leaderBoard.splice(index,1)
+      }
+
       updateRoomDisconnect(
         socket,
         socket.userData.cur_room,
@@ -997,6 +1005,15 @@ io.on("connection", (socket) => {
         user_count
       );
     } else if (roomsInfo.rooms.hide.hasOwnProperty(socket.userData.cur_room)) {
+
+      if(roomsInfo.rooms.hide[socket.userData.cur_room].leaderBoard){
+        let index = 10
+        roomsInfo.rooms.hide[socket.userData.cur_room].leaderBoard.forEach((val, i)=> {
+          if(val[2] === socket.id) index = i
+        })
+        roomsInfo.rooms.hide[socket.userData.cur_room].leaderBoard.splice(index,1)
+      }
+
       updateRoomDisconnect(
         socket,
         socket.userData.cur_room,
@@ -1042,7 +1059,7 @@ function updateRoomDisconnect(socket, room_name, roomsObj) {
     // user left during the game
     // omit from order list
     if (roomsObj[room_name].game.state == game_state.PLAYING) {
-      roomsObj[room_name].game.updateOrder(socket.userData.seat, room_name);
+      roomsObj[room_name].game.updateOrder(socket.userData.seat);
 
       if (roomsObj[room_name].game.isOneLeft()) {
         io.to(room_name).emit("chat announce", "language.ended", "red");
@@ -1060,6 +1077,7 @@ function updateRoomDisconnect(socket, room_name, roomsObj) {
         // pass turn
         roomsObj[room_name].game.nextPlayer({});
       }
+      console.log(roomsObj[room_name])
       io.to(room_name).emit("refresh game room", roomsObj[room_name]);
     }
 
