@@ -4,6 +4,7 @@ let game_state = {
 };
 
 let socket = io();
+var width = $(window).width();
 
 $(function () {
   // SET LANGUAGE
@@ -157,7 +158,7 @@ $(function () {
 
   // RECEIVE MSG FROM SERVER
   socket.on("chat message", (nickname, msg, serverSocket) => {
-    if (screen.width > 600) {
+    if (width > 600) {
       if(socket.id === serverSocket) {
         $("#chat-messages").append($("<div style='color:var(--info)'>").html(`<b>${nickname}:</b> ${msg}`));
         $("#chat-messages").scrollTop($("#chat-messages").prop("scrollHeight"));
@@ -365,7 +366,7 @@ $(function () {
           );
         }
         let spaceDiv = $('<div class="w-100"></div>');
-        if (screen.width > 600) $("#statistics").append(div, spaceDiv);
+        if (width > 600) $("#statistics").append(div, spaceDiv);
         else $("#statistics-media").append(div, spaceDiv);
       });
     } catch (error) {
@@ -376,7 +377,7 @@ $(function () {
   // CONNECT AND DISCCONECT CHAT MSG
   socket.on("chat connection", (user) => {
     //connected to chat
-    if (screen.width > 600) {
+    if (width > 600) {
       if (user.seat > -1)
         $("#chat-messages").append(
           $("<div>")
@@ -422,7 +423,7 @@ $(function () {
     $new_msg.css("color", color);
     $new_msg.addClass("font-weight-bold");
 
-    if (screen.width > 600) {
+    if (width > 600) {
       $("#chat-messages").append($new_msg);
       $("#chat-messages").scrollTop($("#chat-messages").prop("scrollHeight"));
     } else {
@@ -441,7 +442,7 @@ $(function () {
     );
     $new_msg.css("color", color);
     $new_msg.addClass("font-weight-bold");
-    if (screen.width > 600) {
+    if (width > 600) {
       $("#chat-messages").append($new_msg);
       $("#chat-messages").scrollTop($("#chat-messages").prop("scrollHeight"));
     } else {
