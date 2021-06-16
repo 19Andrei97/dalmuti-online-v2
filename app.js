@@ -131,7 +131,8 @@ io.on("connection", (socket) => {
       io.to(socket.userData.cur_room).emit(
         "chat message",
         socket.userData.nickname,
-        msg
+        msg,
+        socket.id
       );
     }
   });

@@ -156,17 +156,32 @@ $(function () {
   });
 
   // RECEIVE MSG FROM SERVER
-  socket.on("chat message", (nickname, msg) => {
+  socket.on("chat message", (nickname, msg, serverSocket) => {
     if (screen.width > 600) {
-      $("#chat-messages").append($("<div>").html(`<b>${nickname}:</b> ${msg}`));
-      $("#chat-messages").scrollTop($("#chat-messages").prop("scrollHeight"));
+      if(socket.id === serverSocket) {
+        $("#chat-messages").append($("<div style='color:var(--info)'>").html(`<b>${nickname}:</b> ${msg}`));
+        $("#chat-messages").scrollTop($("#chat-messages").prop("scrollHeight"));
+      } else {
+        $("#chat-messages").append($("<div>").html(`<b>${nickname}:</b> ${msg}`));
+        $("#chat-messages").scrollTop($("#chat-messages").prop("scrollHeight"));
+      }
+
     } else {
-      $("#chat-messages-media").append(
-        $("<div>").html(`<b>${nickname}:</b> ${msg}`)
-      );
-      $("#chat-messages-media").scrollTop(
-        $("#chat-messages-media").prop("scrollHeight")
-      );
+      if (socket.id === serverSocket) {
+        $("#chat-messages-media").append(
+          $("<div style='color:var(--info)'>").html(`<b>${nickname}:</b> ${msg}`)
+        );
+        $("#chat-messages-media").scrollTop(
+          $("#chat-messages-media").prop("scrollHeight")
+        );
+      } else {
+        $("#chat-messages-media").append(
+          $("<div>").html(`<b>${nickname}:</b> ${msg}`)
+        );
+        $("#chat-messages-media").scrollTop(
+          $("#chat-messages-media").prop("scrollHeight")
+        );
+      }
     }
   });
 
