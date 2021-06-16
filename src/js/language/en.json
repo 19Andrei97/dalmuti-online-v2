@@ -33,7 +33,7 @@
     "write": "Write a message...",
     "send": "Send",
     "shareTit": "Share Room",
-    "shareInvite": "Share the room code with your friends:",
+    "shareInvite": "Share the room name:",
     "close": "Close",
     "players": "Players:",
     "wait": "Waiting",
@@ -45,5 +45,6 @@
     "roomFull": "Room is full",
     "swap": " paid his bills to ",
     "placed": "played:",
-    "taxs": ["Sent:", "Received:"]
+    "taxs": ["Sent:", "Received:"],
+    "leaderboard": "Leaderboard"
 }

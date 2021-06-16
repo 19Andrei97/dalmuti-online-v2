@@ -148,29 +148,16 @@ a {
   opacity: 0.75;
 }
 
-/* .cardsAnimation {
-  animation-name: muvingUp;
-  animation-duration: .5s;
-  animation-iteration-count: 1;
-  animation-timing-function: ease;
-  animation-fill-mode: forwards;
-  animation-delay: .1s;
-}
-
-@keyframes muvingUp {
-  0%   {bottom:0px;opacity: 100%;}
-  100% {bottom:30px;opacity: 0%;}
-} */
-
 .selected {
   border: 3px solid rgb(0, 84, 240) !important;
 }
 
 .pointsDiv {
-  padding-left: 20px;
   font-weight: bold;
-  height: fit-content;
-  padding-top: 10px;
+  height: 30px;
+  padding-top: 5px;
+  padding-left: 0px !important;
+  padding-right: 0px !important;
 }
 
 .bg-success1 {

@@ -33,7 +33,7 @@
     "write": "Scrivi un messaggio...",
     "send": "Invia",
     "shareTit": "Invita gli amici",
-    "shareInvite": "Condividi il codice della stanza con gli amici:",
+    "shareInvite": "Condividi il nome della stanza:",
     "close": "Chiudi",
     "players": "Giocatori:",
     "wait": "In attesa",
@@ -45,5 +45,6 @@
     "roomFull": "La stanza è piena",
     "swap": " ha pagato le tasse a ",
     "placed": "ha giocato:",
-    "taxs": ["Inviato:", "Ricevuto:"]
+    "taxs": ["Inviato:", "Ricevuto:"],
+    "leaderboard": "Classifica"
 }

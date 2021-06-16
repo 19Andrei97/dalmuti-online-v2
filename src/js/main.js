@@ -46,6 +46,10 @@ $(function () {
   $("#shareTitle").text(language.shareTit);
   $("#roomIdShareLang").text(language.shareInvite);
   $("#close").text(language.close);
+  $("#form-chatting-media").text(language.send);
+  $("#message-input-media").attr("placeholder", language.write);
+  $("#leaderboard").children().eq(0).text(language.leaderboard);
+  $("#leaderboard-media").children().eq(0).text(language.leaderboard);
 
   // CHECK nickname OR SET NEW
   let nickname = localStorage.getItem("localnickname");
@@ -213,9 +217,11 @@ $(function () {
   socket.on("refresh game room", (roomData, passed, socketInfo) => {
     if (roomData.game.state == game_state.WAITING) {
       $("#ready-btn").removeClass("disabled");
+      $("#home").removeClass("disabled");
     } else {
       // start
       $("#ready-btn").addClass("disabled");
+      $("#home").addClass("disabled");
       $("#ready-btn").text(language.ready);
     }
 
@@ -297,7 +303,7 @@ $(function () {
             .eq(0)
             .addClass("greaterDalmuti");
           div = $(
-            `<div id=${val[2]} style="font-size: 1.5rem;" class="col w-100 pointsDiv"><i class="gg-crown"></i> ${val[1]}: ${val[0]}</div>`
+            `<div id=${val[2]} style="font-size: 1.5rem;color: burlywood;" class="col w-100 pointsDiv"><i class="gg-crown"></i> ${val[1]}: ${val[0]}</div>`
           );
         } else if (val[3] === "lesserDalmuti") {
           $(`#${val[2]}`).parent().parent().children().eq(0).removeClass();
@@ -345,8 +351,8 @@ $(function () {
           );
         }
         let spaceDiv = $('<div class="w-100"></div>');
-        $("#statistics").append(div, spaceDiv);
-        $("#statistics-media").append(div, spaceDiv);
+        if (screen.width > 600) $("#statistics").append(div, spaceDiv);
+        else $("#statistics-media").append(div, spaceDiv);
       });
     } catch (error) {
       // console.log(error);
