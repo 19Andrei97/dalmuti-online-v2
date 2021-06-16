@@ -778,7 +778,7 @@ $(function () {
               $("#field-section").append(parentDiv);
             }
 
-            $($(".fieldCards").get().reverse()).each(function (fadeInDiv) {
+            $(".fieldCards").each(function (fadeInDiv) {
               $(this)
                 .delay(fadeInDiv * 100)
                 .fadeIn(300);
