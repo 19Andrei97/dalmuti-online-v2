@@ -136,10 +136,6 @@ a {
   opacity: 0.35 !important;
 }
 
-.cardSel {
-  box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
-}
-
 .material-icons {
   cursor: pointer;
 }
@@ -150,6 +146,7 @@ a {
 
 .selected {
   border: 3px solid rgb(0, 84, 240) !important;
+  box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
 }
 
 .pointsDiv {

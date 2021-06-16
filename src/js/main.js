@@ -689,18 +689,10 @@ $(function () {
           // BACKGROUND COLOR = card_colors[userData.hand[i] - 1]
           if (userData.hand[i] != -1) {
             $carddiv = $(
-              `<div class='cards text-center ${
+              `<div class='handCard cards text-center ${
                 card_colors[userData.hand[i] - 1]
               }'></div>`
             );
-
-            $carddiv.on("mouseenter", () => {
-              if (!$carddiv.hasClass("selected")) $carddiv.addClass("cardSel");
-            });
-            $carddiv.on("mouseleave", () => {
-              if (!$carddiv.hasClass("selected"))
-                $carddiv.removeClass("cardSel");
-            });
 
             $carddiv.on("click", () => {
               if (!selected_card[userData.hand[i]])
