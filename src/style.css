@@ -117,7 +117,7 @@ a {
   overflow-y: auto;
   height: calc(100% - 39.5px);
   overflow-wrap: break-word;
-  padding-bottom: 20px;
+  padding: .375rem .75rem;
 }
 
 .errorMSG {
@@ -502,9 +502,8 @@ a {
     z-index: 101;
     display: block !important;
     position: fixed !important;
-    height: 70vh !important;
-    border-radius: 10px;
-    background-color: var(--alert3);
+    height: 82vh !important;
+    background-color: white;
     top: 0px;
     width: 100%;
     padding: 20px !important;
