@@ -128,8 +128,9 @@ a {
   left: 50%;
   top: 40%;
   background-color: var(--primary2);
+  text-align: center;
+  box-shadow: 0px 10px 18px #888888;
   transform: translateX(-50%);
-  width: fit-content !important;
   color: white;
 }
 
