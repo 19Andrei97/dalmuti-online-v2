@@ -29,6 +29,8 @@ body {
 }
 
 .players {
+  line-height: 1;
+  overflow-wrap: anywhere;
   z-index: -1;
 }
 
@@ -372,6 +374,7 @@ a {
 }
 
 .fontMediaSlots {
+  margin-top: .5vh;
   font-size: medium;
 }
 
@@ -400,6 +403,15 @@ a {
 
 .bigScreenMargin{
   margin-top: 20px;
+}
+
+.carousel-indicators li{
+  background-color: var(--success1) !important;
+}
+
+.carousel-control-next-icon, .carousel-control-prev-icon {
+  background-color: var(--success2) !important;
+  border-radius: 5px !important;
 }
 
 @media only screen and (max-width: 1000px) and (min-width: 600px) {

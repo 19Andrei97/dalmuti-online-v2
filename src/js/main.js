@@ -507,7 +507,7 @@ $(function () {
       }
       roomData.leaderBoard.forEach((val, i) => {
         $("#player" + i).append(
-          $("<div id=" + val[2] + "><b>" + val[1] + "</b></div>"),
+          $("<div style='overflow-wrap: anywhere;line-height: normal;' id=" + val[2] + "><b>" + val[1] + "</b></div>"),
           $(
             "<div class='fontMediaSlots'>" +
               language.cards +
