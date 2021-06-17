@@ -29,6 +29,7 @@ body {
 }
 
 .players {
+  word-break: break-all;
   line-height: 1;
   overflow-wrap: anywhere;
   z-index: -1;
