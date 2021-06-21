@@ -659,12 +659,12 @@ io.on("connection", (socket) => {
           let testLastPass =
             roomsInfo.rooms.open[room_name].game.nextPlayer(selected_card);
 
-          io.to(room_name).emit(
-            "chat announce",
-            "language.passed",
-            "black",
-            socket.userData.nickname
-          );
+          // io.to(room_name).emit(
+          //   "chat announce",
+          //   "language.passed",
+          //   "black",
+          //   socket.userData.nickname
+          // );
 
           io.to(room_name).emit(
             "refresh game room",
@@ -831,12 +831,12 @@ io.on("connection", (socket) => {
           let testLastPass =
             roomsInfo.rooms.hide[room_name].game.nextPlayer(selected_card);
 
-          io.to(room_name).emit(
-            "chat announce",
-            `language.passed`,
-            "black",
-            socket.userData.nickname
-          );
+          // io.to(room_name).emit(
+          //   "chat announce",
+          //   `language.passed`,
+          //   "black",
+          //   socket.userData.nickname
+          // );
 
           io.to(room_name).emit(
             "refresh game room",
