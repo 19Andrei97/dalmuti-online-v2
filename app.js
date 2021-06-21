@@ -1,8 +1,10 @@
-var express = require("express");
-var app = express();
-var http = require("http").Server(app);
-var io = require("socket.io")(http);
-var cors = require("cors");
+const express = require("express");
+const app = express();
+const io = require("socket.io")(http);
+const morgan = require("morgan");
+const mainRoutes = require("./server/routes");
+const cors = require("cors");
+const passport = require("passport");
 let {
   Player,
   game_state,
@@ -12,29 +14,22 @@ let {
   roomsInfo,
 } = require("./server/config");
 
-var port = process.env.PORT || 8080;
+const port = process.env.PORT || 8080;
+app.use(cors());
 app.use(express.static(__dirname + "/src"));
+app.use(morgan("dev"));
+app.use(express.urlencoded({ extended: true }));
+app.use(express.json());
+app.use(session({secret:process.env.SECRET_KEY}))
 
-app.get("/", (req, res) => {
-  res.sendFile(__dirname + "/src/index.html");
-});
+app.use(passport.initialize());
+app.use(passport.session());
 
-app.get("/help", (req, res) => {
-  res.sendFile(__dirname + "/src/help.html");
-});
-
-app.get(`/room/:roomName`, cors(), (req, res, next) => {
-  if (
-    roomsInfo.rooms.open[req.params.roomName] ||
-    roomsInfo.rooms.hide[req.params.roomName]
-  ) {
-    res.sendFile(__dirname + "/src/room.html");
-  } else next();
-});
+app.use("/", mainRoutes);
 
 // catch 404 and forward to error handler
 app.use((req, res, next) => {
-  var err = new Error("Not Found");
+  let err = new Error("Not Found");
   err.status = 404;
   return next(err);
 });
@@ -44,11 +39,15 @@ if (app.get("env") === "development") {
     res.status(err.status || 500);
     console.log({
       message: err.message,
-      // error: err,
+      error: err,
     });
     return res.sendFile(__dirname + "/src/fourOfour.html");
   });
 }
+
+app.listen(port, () => {
+  console.log("Listening: " + port);
+});
 
 io.on("connection", (socket) => {
   user_count++;
@@ -58,6 +57,10 @@ io.on("connection", (socket) => {
   // give update to a client only
   socket.join("waiting room");
 
+  console.log(socket.userData,
+    roomsInfo.rooms.open,
+    user_count)
+
   io.to("waiting room").emit(
     "refresh waiting room",
     socket.userData,
@@ -66,7 +69,7 @@ io.on("connection", (socket) => {
   );
 
   console.log(
-    "\x1b[36mNEW:\x1b[0m",
+    "NEW:",
     socket.userData.nickname + " joined main room"
   );
 
@@ -79,7 +82,7 @@ io.on("connection", (socket) => {
   // Set nickname and check adding to room
   socket.on("set new nickname", (n_nickname, roomId) => {
     console.log(
-      "\x1b[32mUPDATE:\x1b[0m",
+      "UPDATE:",
       "Nickname change from " + socket.userData.nickname + " to " + n_nickname
     );
     socket.userData.nickname = n_nickname;
@@ -102,7 +105,7 @@ io.on("connection", (socket) => {
     roomsInfo.roomNumber++;
     let idRoom = `${roomsInfo.roomNumber}-${room_name}`;
     joinRoom(socket, roomsInfo.rooms, idRoom, hide); // Use helper to create and join room
-    socket.emit("connectUrl", `/room/${idRoom}`);
+    socket.emit("connectUrl", `room/${idRoom}`);
   });
 
   // JOIN ROOM
@@ -174,10 +177,10 @@ io.on("connection", (socket) => {
         if (
           Object.keys(roomsInfo.rooms.open[room_name].sockets).length >= 2 &&
           roomsInfo.rooms.open[room_name].game.readyCount ==
-            Object.keys(roomsInfo.rooms.open[room_name].sockets).length
+          Object.keys(roomsInfo.rooms.open[room_name].sockets).length
         ) {
           //start game
-          console.log("\x1b[36mNEW:\x1b[0m", room_name + ": game started");
+          console.log("NEW:", room_name + ": game started");
           io.to(room_name).emit("chat announce", "language.started", "blue");
 
           // set order, shuffle, etc.
@@ -191,8 +194,8 @@ io.on("connection", (socket) => {
           );
           let cnt = 0;
           for (const [sid, user] of Object.entries(
-            roomsInfo.rooms.open[room_name].sockets
-          )) {
+              roomsInfo.rooms.open[room_name].sockets
+            )) {
             for (let i = cnt * handlim; i < handlim * cnt + handlim; i++) {
               user.hand.push(roomsInfo.rooms.open[room_name].game.deck[i]); // userData and room user Data not in sync
               user.pointsReceived = false; // Reset points condition
@@ -257,7 +260,6 @@ io.on("connection", (socket) => {
               let firstTwo = roomsInfo.rooms.open[room_name].sockets[
                 leaderB[leaderB.length - 1][2]
               ].hand.splice(0, 2);
-              console.log(lastTwo, firstTwo);
 
               // SWAP CARDS
               roomsInfo.rooms.open[room_name].sockets[
@@ -337,7 +339,6 @@ io.on("connection", (socket) => {
               let firstOne = roomsInfo.rooms.open[room_name].sockets[
                 leaderB[leaderB.length - 2][2]
               ].hand.splice(0, 1);
-              console.log(lastOne, firstOne);
 
               // SWAP CARDS
               roomsInfo.rooms.open[room_name].sockets[
@@ -423,10 +424,10 @@ io.on("connection", (socket) => {
         if (
           Object.keys(roomsInfo.rooms.hide[room_name].sockets).length >= 2 &&
           roomsInfo.rooms.hide[room_name].game.readyCount ==
-            Object.keys(roomsInfo.rooms.hide[room_name].sockets).length
+          Object.keys(roomsInfo.rooms.hide[room_name].sockets).length
         ) {
           //start game
-          console.log("\x1b[36mNEW:\x1b[0m", room_name + ": game started");
+          console.log("NEW:", room_name + ": game started");
           io.to(room_name).emit("chat announce", "language.started", "blue");
 
           // set order, shuffle, etc.
@@ -440,8 +441,8 @@ io.on("connection", (socket) => {
           );
           let cnt = 0;
           for (const [sid, user] of Object.entries(
-            roomsInfo.rooms.hide[room_name].sockets
-          )) {
+              roomsInfo.rooms.hide[room_name].sockets
+            )) {
             for (let i = cnt * handlim; i < handlim * cnt + handlim; i++) {
               user.hand.push(roomsInfo.rooms.hide[room_name].game.deck[i]); // userData and room user Data not in sync
               user.pointsReceived = false; // Reset points condition
@@ -506,7 +507,6 @@ io.on("connection", (socket) => {
               let firstTwo = roomsInfo.rooms.hide[room_name].sockets[
                 leaderB[leaderB.length - 1][2]
               ].hand.splice(0, 2);
-              console.log(lastTwo, firstTwo);
 
               // SWAP CARDS
               roomsInfo.rooms.hide[room_name].sockets[
@@ -586,7 +586,6 @@ io.on("connection", (socket) => {
               let firstOne = roomsInfo.rooms.hide[room_name].sockets[
                 leaderB[leaderB.length - 2][2]
               ].hand.splice(0, 1);
-              console.log(lastOne, firstOne);
 
               // SWAP CARDS
               roomsInfo.rooms.hide[room_name].sockets[
@@ -779,8 +778,8 @@ io.on("connection", (socket) => {
                 //end game
                 roomsInfo.rooms.open[room_name].game.end();
                 for (const [sid, userData] of Object.entries(
-                  roomsInfo.rooms.open[room_name].sockets
-                )) {
+                    roomsInfo.rooms.open[room_name].sockets
+                  )) {
                   userData.reset();
                 }
               }
@@ -883,6 +882,7 @@ io.on("connection", (socket) => {
                       obj[player].points,
                       obj[player].nickname,
                       player,
+                      points // ADDED
                     ]);
                   } else {
                     let points = 0;
@@ -897,6 +897,7 @@ io.on("connection", (socket) => {
                       obj[player].points,
                       obj[player].nickname,
                       player,
+                      points // ADDED
                     ]);
                   }
                 } else if (
@@ -904,23 +905,24 @@ io.on("connection", (socket) => {
                     !obj[player].pointsReceived) ||
                   !obj[player].ready
                 ) {
-                  leaderBoard.push([0, obj[player].nickname, player]);
+                  leaderBoard.push([0, obj[player].nickname, player, 0]); // ADDED 0
                 } else {
                   leaderBoard.push([
                     obj[player].points,
                     obj[player].nickname,
                     player,
+                    0 // ADDED
                   ]);
                 }
               }
 
-              leaderBoard.sort((a, b) => b[0] - a[0]); // For descending sort
+              leaderBoard.sort((a, b) => b[3] - a[3]); // For descending sort
 
               if (leaderBoard.length === 3) {
                 leaderBoard[0].push("greaterDalmuti");
                 leaderBoard[1].push("merchant");
                 leaderBoard[2].push("greaterPeon");
-              } else if (leaderBoard.length > 3 && leaderBoard.length < 8) {
+              } else if (leaderBoard.length > 3 && leaderBoard.length <= 8) {
                 leaderBoard.forEach((val, i) => {
                   if (i === 0) val.push("greaterDalmuti");
                   else if (i === 1) val.push("lesserDalmuti");
@@ -947,8 +949,8 @@ io.on("connection", (socket) => {
                 // End game
                 roomsInfo.rooms.hide[room_name].game.end();
                 for (const [sid, userData] of Object.entries(
-                  roomsInfo.rooms.hide[room_name].sockets
-                )) {
+                    roomsInfo.rooms.hide[room_name].sockets
+                  )) {
                   userData.reset();
                 }
               }
@@ -984,12 +986,12 @@ io.on("connection", (socket) => {
     );
 
     if (roomsInfo.rooms.open.hasOwnProperty(socket.userData.cur_room)) {
-      if(roomsInfo.rooms.open[socket.userData.cur_room].leaderBoard){
+      if (roomsInfo.rooms.open[socket.userData.cur_room].leaderBoard) {
         let index = 10
-        roomsInfo.rooms.open[socket.userData.cur_room].leaderBoard.forEach((val, i)=> {
-          if(val[2] === socket.id) index = i
+        roomsInfo.rooms.open[socket.userData.cur_room].leaderBoard.forEach((val, i) => {
+          if (val[2] === socket.id) index = i
         })
-        roomsInfo.rooms.open[socket.userData.cur_room].leaderBoard.splice(index,1)
+        roomsInfo.rooms.open[socket.userData.cur_room].leaderBoard.splice(index, 1)
       }
 
       updateRoomDisconnect(
@@ -1006,12 +1008,12 @@ io.on("connection", (socket) => {
       );
     } else if (roomsInfo.rooms.hide.hasOwnProperty(socket.userData.cur_room)) {
 
-      if(roomsInfo.rooms.hide[socket.userData.cur_room].leaderBoard){
+      if (roomsInfo.rooms.hide[socket.userData.cur_room].leaderBoard) {
         let index = 10
-        roomsInfo.rooms.hide[socket.userData.cur_room].leaderBoard.forEach((val, i)=> {
-          if(val[2] === socket.id) index = i
+        roomsInfo.rooms.hide[socket.userData.cur_room].leaderBoard.forEach((val, i) => {
+          if (val[2] === socket.id) index = i
         })
-        roomsInfo.rooms.hide[socket.userData.cur_room].leaderBoard.splice(index,1)
+        roomsInfo.rooms.hide[socket.userData.cur_room].leaderBoard.splice(index, 1)
       }
 
       updateRoomDisconnect(
@@ -1066,8 +1068,8 @@ function updateRoomDisconnect(socket, room_name, roomsObj) {
         //end game
         roomsObj[room_name].game.end();
         for (const [sid, userData] of Object.entries(
-          roomsObj[room_name].sockets
-        )) {
+            roomsObj[room_name].sockets
+          )) {
           userData.reset();
         }
       }
@@ -1353,13 +1355,11 @@ function checkRule(roomData, selected_card) {
       for (const [card, val] of Object.entries(selected_card)) {
         if (roomData.game.last.num - card <= 0) {
           // can't throw 13 alone
-          console.log(roomData.game.last.num + " <= " + card);
           return false; // if any of card no. is equal/greater than the last one, no go
         }
       }
     } else {
       // more than 1 card type
-      console.log("13 included");
       // case with with 13
       // except 13, the card no. must be smaller
       for (const [card, val] of Object.entries(selected_card)) {
@@ -1400,7 +1400,3 @@ function updateHand(socket, roomData, selected_card) {
 
   // if your hand is empty? you win
 }
-
-http.listen(port, () => {
-  console.log("Listening: " + port);
-});

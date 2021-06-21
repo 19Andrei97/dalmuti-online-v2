@@ -10,8 +10,14 @@
   "author": "MG",
   "license": "ISC",
   "dependencies": {
+    "cookie-session": "^1.4.0",
     "cors": "^2.8.5",
+    "custom-env": "^2.0.1",
     "express": "^4.16.2",
+    "morgan": "^1.10.0",
+    "passport": "^0.4.1",
+    "path": "^0.12.7",
+    "pg": "^8.6.0",
     "pm2": "^5.1.0",
     "socket.io": "^2.0.4"
   },
