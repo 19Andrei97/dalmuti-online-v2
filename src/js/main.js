@@ -200,7 +200,11 @@ $(function () {
   // pass turn, next order
   $("#play-btn").on("click", () => {
     if (!$("#play-btn").hasClass("disabled")) {
-      socket.emit("play", selected_card);
+      // Confirm alert if passing with no card on field
+      if($("#play-btn").text() === language.pass && $('#field-section').children().length === 0) {
+        let confirmPass = confirm(language.confirmPass);
+        if(confirmPass) socket.emit("play", selected_card);
+      } else socket.emit("play", selected_card);
     }
   });
 

@@ -46,5 +46,6 @@
     "swap": " paid his bills to ",
     "placed": "played:",
     "taxs": ["Sent:", "Received:"],
-    "leaderboard": "Leaderboard"
+    "leaderboard": "Leaderboard",
+    "confirmPass": "Are you sure you want to pass?"
 }

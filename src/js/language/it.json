@@ -46,5 +46,6 @@
     "swap": " ha pagato le tasse a ",
     "placed": "ha giocato:",
     "taxs": ["Inviato:", "Ricevuto:"],
-    "leaderboard": "Classifica"
+    "leaderboard": "Classifica",
+    "confirmPass": "Sei sicuro di voler passare?"
 }
