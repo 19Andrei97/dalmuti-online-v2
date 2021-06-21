@@ -314,7 +314,7 @@ io.on("connection", (socket) => {
                 }
               );
               roomsInfo.rooms.open[room_name].sockets[
-                leaderB[leaderB.length - 1][2]
+                leaderB[leaderB.length - 2][2]
               ].hand.sort(function (a, b) {
                 return a - b;
               });
@@ -561,7 +561,7 @@ io.on("connection", (socket) => {
                 }
               );
               roomsInfo.rooms.hide[room_name].sockets[
-                leaderB[leaderB.length - 1][2]
+                leaderB[leaderB.length - 2][2]
               ].hand.sort(function (a, b) {
                 return a - b;
               });
