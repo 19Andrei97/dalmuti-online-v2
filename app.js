@@ -11,6 +11,9 @@ let {
   connectNumber,
   roomsInfo,
 } = require("./server/config");
+const {
+  Console
+} = require("console");
 
 var port = process.env.PORT || 8080;
 app.use(express.static(__dirname + "/src"));
@@ -66,7 +69,7 @@ io.on("connection", (socket) => {
   );
 
   console.log(
-    "\x1b[36mNEW:\x1b[0m",
+    "NEW:",
     socket.userData.nickname + " joined main room"
   );
 
@@ -79,7 +82,7 @@ io.on("connection", (socket) => {
   // Set nickname and check adding to room
   socket.on("set new nickname", (n_nickname, roomId) => {
     console.log(
-      "\x1b[32mUPDATE:\x1b[0m",
+      "UPDATE:",
       "Nickname change from " + socket.userData.nickname + " to " + n_nickname
     );
     socket.userData.nickname = n_nickname;
@@ -174,10 +177,10 @@ io.on("connection", (socket) => {
         if (
           Object.keys(roomsInfo.rooms.open[room_name].sockets).length >= 2 &&
           roomsInfo.rooms.open[room_name].game.readyCount ==
-            Object.keys(roomsInfo.rooms.open[room_name].sockets).length
+          Object.keys(roomsInfo.rooms.open[room_name].sockets).length
         ) {
           //start game
-          console.log("\x1b[36mNEW:\x1b[0m", room_name + ": game started");
+          console.log("NEW:", room_name + ": game started");
           io.to(room_name).emit("chat announce", "language.started", "blue");
 
           // set order, shuffle, etc.
@@ -191,8 +194,8 @@ io.on("connection", (socket) => {
           );
           let cnt = 0;
           for (const [sid, user] of Object.entries(
-            roomsInfo.rooms.open[room_name].sockets
-          )) {
+              roomsInfo.rooms.open[room_name].sockets
+            )) {
             for (let i = cnt * handlim; i < handlim * cnt + handlim; i++) {
               user.hand.push(roomsInfo.rooms.open[room_name].game.deck[i]); // userData and room user Data not in sync
               user.pointsReceived = false; // Reset points condition
@@ -257,7 +260,6 @@ io.on("connection", (socket) => {
               let firstTwo = roomsInfo.rooms.open[room_name].sockets[
                 leaderB[leaderB.length - 1][2]
               ].hand.splice(0, 2);
-              console.log(lastTwo, firstTwo);
 
               // SWAP CARDS
               roomsInfo.rooms.open[room_name].sockets[
@@ -337,7 +339,6 @@ io.on("connection", (socket) => {
               let firstOne = roomsInfo.rooms.open[room_name].sockets[
                 leaderB[leaderB.length - 2][2]
               ].hand.splice(0, 1);
-              console.log(lastOne, firstOne);
 
               // SWAP CARDS
               roomsInfo.rooms.open[room_name].sockets[
@@ -423,10 +424,10 @@ io.on("connection", (socket) => {
         if (
           Object.keys(roomsInfo.rooms.hide[room_name].sockets).length >= 2 &&
           roomsInfo.rooms.hide[room_name].game.readyCount ==
-            Object.keys(roomsInfo.rooms.hide[room_name].sockets).length
+          Object.keys(roomsInfo.rooms.hide[room_name].sockets).length
         ) {
           //start game
-          console.log("\x1b[36mNEW:\x1b[0m", room_name + ": game started");
+          console.log("NEW:", room_name + ": game started");
           io.to(room_name).emit("chat announce", "language.started", "blue");
 
           // set order, shuffle, etc.
@@ -440,8 +441,8 @@ io.on("connection", (socket) => {
           );
           let cnt = 0;
           for (const [sid, user] of Object.entries(
-            roomsInfo.rooms.hide[room_name].sockets
-          )) {
+              roomsInfo.rooms.hide[room_name].sockets
+            )) {
             for (let i = cnt * handlim; i < handlim * cnt + handlim; i++) {
               user.hand.push(roomsInfo.rooms.hide[room_name].game.deck[i]); // userData and room user Data not in sync
               user.pointsReceived = false; // Reset points condition
@@ -506,7 +507,6 @@ io.on("connection", (socket) => {
               let firstTwo = roomsInfo.rooms.hide[room_name].sockets[
                 leaderB[leaderB.length - 1][2]
               ].hand.splice(0, 2);
-              console.log(lastTwo, firstTwo);
 
               // SWAP CARDS
               roomsInfo.rooms.hide[room_name].sockets[
@@ -586,8 +586,6 @@ io.on("connection", (socket) => {
               let firstOne = roomsInfo.rooms.hide[room_name].sockets[
                 leaderB[leaderB.length - 2][2]
               ].hand.splice(0, 1);
-              console.log(lastOne, firstOne);
-
               // SWAP CARDS
               roomsInfo.rooms.hide[room_name].sockets[
                 leaderB[leaderB.length - 2][2]
@@ -682,6 +680,11 @@ io.on("connection", (socket) => {
             // update hand
             updateHand(socket, roomsInfo.rooms.open[room_name], selected_card);
 
+            // Set all players as playing
+            roomsInfo.rooms.open[room_name].game.cur_order.forEach((val, i) => {
+              if (val === 0) roomsInfo.rooms.open[room_name].game.cur_order.splice(i,1,1)
+            })
+
             //Winning condition
             if (
               roomsInfo.rooms.open[room_name].sockets[socket.id].hand.length ==
@@ -756,9 +759,8 @@ io.on("connection", (socket) => {
                 leaderBoard.forEach((val, i) => {
                   if (i === 0) val.push("greaterDalmuti");
                   else if (i === 1) val.push("lesserDalmuti");
-                  else if (leaderBoard.length - i === 1) val.push("lesserPeon");
-                  else if (leaderBoard.length - i === 0)
-                    val.push("greaterPeon");
+                  else if (leaderBoard.length - i === 2) val.push("lesserPeon");
+                  else if (leaderBoard.length - i === 1) val.push("greaterPeon");
                   else val.push("merchant");
                 });
               } else {
@@ -779,8 +781,8 @@ io.on("connection", (socket) => {
                 //end game
                 roomsInfo.rooms.open[room_name].game.end();
                 for (const [sid, userData] of Object.entries(
-                  roomsInfo.rooms.open[room_name].sockets
-                )) {
+                    roomsInfo.rooms.open[room_name].sockets
+                  )) {
                   userData.reset();
                 }
               }
@@ -849,6 +851,11 @@ io.on("connection", (socket) => {
 
             // update hand
             updateHand(socket, roomsInfo.rooms.hide[room_name], selected_card);
+
+            // Set all players as playing
+            roomsInfo.rooms.hide[room_name].game.cur_order.forEach(val => {
+              if (val === 0) roomsInfo.rooms.hide[room_name].game.cur_order.splice(i,1,1);
+            });
 
             //Winning condition
             if (
@@ -947,8 +954,8 @@ io.on("connection", (socket) => {
                 // End game
                 roomsInfo.rooms.hide[room_name].game.end();
                 for (const [sid, userData] of Object.entries(
-                  roomsInfo.rooms.hide[room_name].sockets
-                )) {
+                    roomsInfo.rooms.hide[room_name].sockets
+                  )) {
                   userData.reset();
                 }
               }
@@ -984,12 +991,12 @@ io.on("connection", (socket) => {
     );
 
     if (roomsInfo.rooms.open.hasOwnProperty(socket.userData.cur_room)) {
-      if(roomsInfo.rooms.open[socket.userData.cur_room].leaderBoard){
+      if (roomsInfo.rooms.open[socket.userData.cur_room].leaderBoard) {
         let index = 10
-        roomsInfo.rooms.open[socket.userData.cur_room].leaderBoard.forEach((val, i)=> {
-          if(val[2] === socket.id) index = i
+        roomsInfo.rooms.open[socket.userData.cur_room].leaderBoard.forEach((val, i) => {
+          if (val[2] === socket.id) index = i
         })
-        roomsInfo.rooms.open[socket.userData.cur_room].leaderBoard.splice(index,1)
+        roomsInfo.rooms.open[socket.userData.cur_room].leaderBoard.splice(index, 1)
       }
 
       updateRoomDisconnect(
@@ -1006,12 +1013,12 @@ io.on("connection", (socket) => {
       );
     } else if (roomsInfo.rooms.hide.hasOwnProperty(socket.userData.cur_room)) {
 
-      if(roomsInfo.rooms.hide[socket.userData.cur_room].leaderBoard){
+      if (roomsInfo.rooms.hide[socket.userData.cur_room].leaderBoard) {
         let index = 10
-        roomsInfo.rooms.hide[socket.userData.cur_room].leaderBoard.forEach((val, i)=> {
-          if(val[2] === socket.id) index = i
+        roomsInfo.rooms.hide[socket.userData.cur_room].leaderBoard.forEach((val, i) => {
+          if (val[2] === socket.id) index = i
         })
-        roomsInfo.rooms.hide[socket.userData.cur_room].leaderBoard.splice(index,1)
+        roomsInfo.rooms.hide[socket.userData.cur_room].leaderBoard.splice(index, 1)
       }
 
       updateRoomDisconnect(
@@ -1066,8 +1073,8 @@ function updateRoomDisconnect(socket, room_name, roomsObj) {
         //end game
         roomsObj[room_name].game.end();
         for (const [sid, userData] of Object.entries(
-          roomsObj[room_name].sockets
-        )) {
+            roomsObj[room_name].sockets
+          )) {
           userData.reset();
         }
       }
@@ -1077,7 +1084,6 @@ function updateRoomDisconnect(socket, room_name, roomsObj) {
         // pass turn
         roomsObj[room_name].game.nextPlayer({});
       }
-      console.log(roomsObj[room_name])
       io.to(room_name).emit("refresh game room", roomsObj[room_name]);
     }
 
@@ -1353,13 +1359,11 @@ function checkRule(roomData, selected_card) {
       for (const [card, val] of Object.entries(selected_card)) {
         if (roomData.game.last.num - card <= 0) {
           // can't throw 13 alone
-          console.log(roomData.game.last.num + " <= " + card);
           return false; // if any of card no. is equal/greater than the last one, no go
         }
       }
     } else {
       // more than 1 card type
-      console.log("13 included");
       // case with with 13
       // except 13, the card no. must be smaller
       for (const [card, val] of Object.entries(selected_card)) {
@@ -1379,7 +1383,7 @@ function checkRule(roomData, selected_card) {
 
 function updateHand(socket, roomData, selected_card) {
   let sid = socket.id;
-  let room_name = socket.userData.cur_room;
+
   let hand_map = {};
   for (let i = 0; i < roomData.sockets[sid].hand.length; i++) {
     let card = roomData.sockets[sid].hand[i];
