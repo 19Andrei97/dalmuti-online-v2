@@ -8,11 +8,15 @@
 
   <link rel="stylesheet" href="style.css">
 
-  <!-- Bootstrap -->
-  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
-  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
-  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+  <!-- Bootstrap (with Subresource Integrity) -->
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css"
+    integrity="sha384-JcKb8q3iqJ61gNV9KGb8thSsNjpSL0n8PARn9HuZOnIxN0hoP+VmmDGMN5t9UJ0Z" crossorigin="anonymous">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"
+    integrity="sha384-ZvpUoO/+PpLXR1lu4jmpXWu80pZlYUAfxl5NsBMWOEPSjUn/6Z/hRTt8+pR6L4N2" crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"
+    integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo" crossorigin="anonymous"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"
+    integrity="sha384-B4gt1jrGC7Jh4AgTPSdUtOBvfO8shuf57BaghqFfPlYxofvL8/KUEfYiJOMMV+rV" crossorigin="anonymous"></script>
 
   <script src="/socket.io/socket.io.js"></script>
   <script src="./js/main.js"></script>
@@ -114,9 +118,9 @@
               </div>
               <label id="chooseLang" for="set-nickname" class="col-form-label">Choose language:</label>
               <div class="form-group">
-                <a href="#" onclick="setLanguage('en')">English</a>
-                <a href="#" onclick="setLanguage('it')">Italiano</a>
-                <a href="#" onclick="setLanguage('bg')">Български</a>
+                <a href="#" class="lang-link" data-lang="en">English</a>
+                <a href="#" class="lang-link" data-lang="it">Italiano</a>
+                <a href="#" class="lang-link" data-lang="bg">Български</a>
               </div>
             </form>
           </div>
@@ -172,12 +176,5 @@
     </button>
   </div>
 </body>
-
-<script>
-  function setLanguage(lang) {
-    localStorage.setItem('language', lang);
-    location.reload();
-  }
-</script>
 
 </html>
