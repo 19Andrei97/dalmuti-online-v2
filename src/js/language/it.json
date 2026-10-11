@@ -32,6 +32,7 @@
     "connected": " connesso",
     "write": "Scrivi un messaggio...",
     "send": "Invia",
+    "share": "Invita",
     "shareTit": "Invita gli amici",
     "shareInvite": "Condividi il nome della stanza:",
     "close": "Chiudi",
@@ -78,5 +79,7 @@
     "badBot": "Bot non valido.",
     "fillBots": "Riempi con bot",
     "botAdd": "Aggiungi",
-    "fullscreen": "Schermo intero"
+    "fullscreen": "Schermo intero",
+    "revolutionReady": "Puoi dichiarare una rivoluzione.",
+    "selectHint": "Tocca una carta per prenderle tutte di quel valore. Shift-tocca (o tieni premuto) per una copia."
 }

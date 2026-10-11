@@ -1,0 +1,299 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ---- Self-hosted fonts (no external CDN, keeps the CSP tight) ---------- */
+@font-face {
+  font-family: "Cinzel";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("/fonts/cinzel-600.ttf") format("truetype");
+}
+@font-face {
+  font-family: "Cinzel";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("/fonts/cinzel-700.ttf") format("truetype");
+}
+@font-face {
+  font-family: "MedievalSharp";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/medievalsharp-400.ttf") format("truetype");
+}
+
+/* ---- Base ------------------------------------------------------------- */
+@layer base {
+  :root {
+    --card-w: 102px;
+    --card-h: 160px;
+    --sprite-w: 500px;
+    --sprite-h: 474.375px;
+  }
+
+  /* Smaller cards on phones so a full hand still fits. */
+  @media (max-width: 640px) {
+    :root {
+      --card-w: 76px;
+      --card-h: 119px;
+      --sprite-w: 375px;
+      --sprite-h: 355.78px;
+    }
+  }
+
+  html,
+  body {
+    min-height: 100%;
+  }
+
+  body {
+    @apply bg-parchment text-ink font-body;
+    /* Subtle parchment grain via layered gradients. */
+    background-image:
+      radial-gradient(circle at 20% 15%, rgba(201, 162, 39, 0.08), transparent 45%),
+      radial-gradient(circle at 85% 80%, rgba(140, 47, 47, 0.07), transparent 40%);
+  }
+
+  h1,
+  h2,
+  h3 {
+    @apply font-display;
+  }
+
+  /* Visible, medieval-ish focus ring for keyboard users. */
+  :focus-visible {
+    outline: 3px solid theme("colors.gold.DEFAULT");
+    outline-offset: 2px;
+  }
+}
+
+/* ---- Components ------------------------------------------------------- */
+@layer components {
+  .btn {
+    @apply inline-flex items-center justify-center gap-2 rounded-md border px-4 py-2
+      font-display font-semibold tracking-wide transition
+      disabled:cursor-not-allowed disabled:opacity-40;
+  }
+
+  .btn-gold {
+    @apply border-gold-dark bg-gradient-to-b from-gold-light to-gold text-ink shadow
+      hover:from-gold hover:to-gold-dark;
+  }
+
+  .btn-herald {
+    @apply border-herald-dark bg-gradient-to-b from-herald-light to-herald text-parchment shadow
+      hover:from-herald hover:to-herald-dark;
+  }
+
+  .btn-royal {
+    @apply border-royal bg-gradient-to-b from-royal-light to-royal text-parchment shadow
+      hover:from-royal hover:to-ink;
+  }
+
+  .btn-forest {
+    @apply border-forest-dark bg-gradient-to-b from-forest-light to-forest text-ink shadow
+      hover:from-forest hover:to-forest-dark;
+  }
+
+  .panel {
+    @apply rounded-lg border border-gold-dark/50 bg-parchment-dark/80 shadow-banner backdrop-blur-sm;
+  }
+
+  /* Display for panels that are toggled with the `hidden` utility. The utility
+     layer is emitted after the component layer, so `hidden` wins here — whereas
+     a `flex` utility on the same element would always beat `hidden`. */
+  .panel-flex {
+    display: flex;
+  }
+
+  .field-label {
+    @apply mb-1 block font-display text-sm font-semibold text-ink-soft;
+  }
+
+  .input {
+    @apply w-full rounded-md border border-ink-soft/40 bg-parchment px-3 py-2 text-ink
+      placeholder:text-ink-soft/50 focus:border-gold focus:outline-none;
+  }
+
+  /* Room list row in the lobby. */
+  .room-row {
+    @apply flex cursor-pointer items-center justify-between rounded-md border border-gold-dark/40
+      bg-parchment-dark px-4 py-3 text-left font-display font-semibold transition
+      hover:border-gold hover:bg-parchment-deeper;
+  }
+
+  /* Language picker link; the active one is marked by the client (bold + gold). */
+  .lang-link {
+    @apply cursor-pointer text-ink transition hover:text-gold-dark;
+  }
+}
+
+/* ---- Cards ------------------------------------------------------------ */
+@layer components {
+  .cards,
+  .fieldCards {
+    position: relative;
+    width: var(--card-w);
+    height: var(--card-h);
+    border-radius: 8px;
+    background-image: url("/icons/img-cards.jpg");
+    background-repeat: no-repeat;
+    background-size: var(--sprite-w) var(--sprite-h);
+    filter: brightness(1.2);
+    flex: 0 0 auto;
+    transition: transform 0.12s ease, box-shadow 0.12s ease;
+  }
+
+  /* Sprite grid positions (13 ranks on a 5 x 3 sheet). */
+  .dalmuti { background-position: 50% 0; }
+  .archbishop { background-position: 75% 0; }
+  .marshal { background-position: 100% 0; }
+  .mason { background-position: 100% 50%; }
+  .seamstress { background-position: 75% 50%; }
+  .abbess { background-position: 25% 50%; }
+  .knight { background-position: 50% 50%; }
+  .baroness { background-position: 0 50%; }
+  .cook { background-position: 0 100%; }
+  .shepherdess { background-position: 25% 100%; }
+  .stonecutter { background-position: 50% 100%; }
+  .peasant { background-position: 75% 100%; }
+  .jolly { background-position: 0 0; }
+
+  .backCard {
+    background: url("/icons/img-cover.jpg") no-repeat center;
+    background-size: 110px;
+    border-radius: 8px;
+  }
+
+  /* A hand/field row overlaps its cards; the first card sits flush. */
+  .card-row > .cards,
+  .card-row > .fieldCards,
+  .card-row > .flip-inner {
+    margin-left: calc(var(--card-w) * -0.55);
+  }
+  .card-row > .cards:first-child,
+  .card-row > .fieldCards:first-child,
+  .card-row > .flip-inner:first-child {
+    margin-left: 0;
+  }
+
+  /* Selection: lift the card and mark it, no per-card extra chrome. */
+  .cards.selectable {
+    cursor: pointer;
+  }
+  .cards.selectable:hover {
+    transform: translateY(-6px);
+  }
+  .cards.selected {
+    transform: translateY(-14px);
+    box-shadow: 0 0 0 3px theme("colors.gold.DEFAULT"), 0 10px 18px rgba(0, 0, 0, 0.45);
+    z-index: 5;
+  }
+
+  /* Role heraldry behind a seat. */
+  .role-art {
+    position: absolute;
+    inset: 0;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: contain;
+    opacity: 0.28;
+    pointer-events: none;
+  }
+  .role-greaterDalmuti { background-image: url("/icons/greaterDalmuti.png"); opacity: 0.35; }
+  .role-lesserDalmuti { background-image: url("/icons/lesserDalmuti.png"); }
+  .role-merchant { background-image: url("/icons/merchant.png"); }
+  .role-lesserPeon { background-image: url("/icons/lesserPeon.png"); }
+  .role-greaterPeon { background-image: url("/icons/greaterPeon.png"); opacity: 0.35; }
+
+  .badge {
+    @apply ml-1 rounded bg-royal-light px-1 align-middle text-[0.6rem] font-bold text-parchment;
+  }
+
+  .currentTurn {
+    @apply ring-2 ring-gold;
+    box-shadow: 0 0 18px rgba(201, 162, 39, 0.55);
+  }
+
+  /* A player seat around the table. */
+  .seat {
+    @apply relative flex min-h-[84px] flex-col items-center justify-start overflow-hidden rounded-md
+      border border-gold-dark/40 bg-parchment-dark px-1 py-1 text-center text-xs sm:min-h-[104px] sm:text-sm;
+  }
+  .seat-body {
+    @apply relative z-10 flex flex-col items-center gap-0.5;
+  }
+
+  /* Chat/score sidebar: a bottom sheet on phones, a column on wide screens. */
+  .chat-panel {
+    @apply flex flex-col gap-2;
+  }
+  @media (max-width: 1023px) {
+    .chat-panel {
+      @apply fixed inset-x-0 bottom-0 z-40 max-h-[85vh] translate-y-full rounded-b-none
+        border-t-2 border-gold bg-parchment transition-transform duration-300;
+    }
+    .chat-panel.chat-open {
+      @apply translate-y-0;
+    }
+  }
+
+  dialog.modal {
+    @apply m-auto w-[min(92vw,30rem)] rounded-lg border border-gold-dark/60 bg-parchment p-0 text-ink shadow-banner;
+  }
+  dialog.modal::backdrop {
+    background: rgba(20, 14, 8, 0.65);
+  }
+}
+
+/* ---- Flip animation for the field ------------------------------------- */
+@layer utilities {
+  .flip-inner {
+    position: relative;
+    width: var(--card-w);
+    height: var(--card-h);
+    transition: transform 0.6s;
+    transform-style: preserve-3d;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  }
+  .flip-inner.active {
+    transform: rotateY(180deg);
+  }
+  .flip-face {
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+  }
+  .flip-back {
+    position: absolute;
+    inset: 0;
+    transform: rotateY(180deg);
+  }
+  .card-enter {
+    animation: card-enter 0.28s ease-out both;
+  }
+}
+
+@keyframes card-enter {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ---- Reduced motion --------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}

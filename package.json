@@ -4,6 +4,11 @@
   "description": "The Great Dalmuti online game (socket.io)",
   "main": "app.js",
   "scripts": {
+    "build": "npm run build:js && npm run build:css",
+    "build:css": "postcss src/css/tailwind.css -o src/css/app.css",
+    "build:js": "esbuild src/ts/main.ts src/ts/login.ts --bundle --minify --target=es2020 --format=iife --outdir=src/js",
+    "watch:css": "postcss src/css/tailwind.css -o src/css/app.css --watch",
+    "typecheck": "tsc --noEmit",
     "start": "node app.js",
     "test": "node --test \"test/**/*.test.js\""
   },
@@ -22,7 +27,13 @@
     "socket.io": "^4.8.0"
   },
   "devDependencies": {
-    "socket.io-client": "^4.8.0"
+    "autoprefixer": "^10.6.1",
+    "esbuild": "^0.25.12",
+    "postcss": "^8.5.29",
+    "postcss-cli": "^11.0.1",
+    "socket.io-client": "^4.8.0",
+    "tailwindcss": "^3.4.19",
+    "typescript": "^5.9.3"
   },
   "engines": {
     "node": ">=18 <23"

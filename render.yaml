@@ -5,7 +5,9 @@ services:
     name: dalmuti
     runtime: node
     plan: free
-    buildCommand: npm ci
+    # --include=dev keeps the Tailwind/esbuild/TypeScript toolchain available
+    # even though NODE_ENV=production (npm would otherwise omit devDependencies).
+    buildCommand: npm ci --include=dev && npm run build
     startCommand: npm start
     healthCheckPath: /healthz
     autoDeployTrigger: commit

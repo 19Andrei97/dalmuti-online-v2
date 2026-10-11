@@ -32,6 +32,7 @@
     "connected": " connected",
     "write": "Write a message...",
     "send": "Send",
+    "share": "Share",
     "shareTit": "Share Room",
     "shareInvite": "Share the room name:",
     "close": "Close",
@@ -78,5 +79,7 @@
     "badBot": "Invalid bot.",
     "fillBots": "Fill with bots",
     "botAdd": "Add",
-    "fullscreen": "Fullscreen"
+    "fullscreen": "Fullscreen",
+    "revolutionReady": "You may declare a revolution.",
+    "selectHint": "Tap a card to pick all of that rank. Shift-tap (or long press) for one copy."
 }

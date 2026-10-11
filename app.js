@@ -58,20 +58,12 @@ function createServer(opts = {}) {
     helmet({
       contentSecurityPolicy: {
         directives: {
+          // Everything is self-hosted (Tailwind output, fonts, socket.io client,
+          // card sprites), so no third-party origins are needed.
           defaultSrc: ["'self'"],
-          scriptSrc: [
-            "'self'",
-            "https://ajax.googleapis.com",
-            "https://cdnjs.cloudflare.com",
-            "https://maxcdn.bootstrapcdn.com",
-          ],
-          styleSrc: [
-            "'self'",
-            "https://maxcdn.bootstrapcdn.com",
-            "https://fonts.googleapis.com",
-            "https://css.gg",
-          ],
-          fontSrc: ["'self'", "https://fonts.gstatic.com", "https://maxcdn.bootstrapcdn.com"],
+          scriptSrc: ["'self'"],
+          styleSrc: ["'self'"],
+          fontSrc: ["'self'"],
           imgSrc: ["'self'", "data:"],
           connectSrc: ["'self'", "ws:", "wss:"],
         },

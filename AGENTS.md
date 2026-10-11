@@ -35,11 +35,54 @@ required to create or join a room. `/healthz` is always reachable without auth.
 ## Commands
 
 - Install: `npm install`
+- Build frontend: `npm run build` (Tailwind CSS then esbuild). **Run this after
+  editing `src/ts/**` or `src/css/tailwind.css`** — the HTML loads the built
+  `src/js/main.js`, `src/js/login.js` and `src/css/app.css`.
+- Typecheck: `npm run typecheck` (`tsc --noEmit`). The build does not typecheck,
+  so run this before committing.
+- Watch CSS: `npm run watch:css` while iterating on styles.
 - Run: `npm start` (`node app.js`; honours `PORT`, `DB_PATH`, `SESSION_SECRET`,
   `ALLOWED_ORIGINS`, `AUTH_ENABLED`). Default port 8080.
 - Test: `npm test` → `node --test "test/**/*.test.js"`. Node 18–22 required.
   The glob form matters: Node 24 does not accept a bare directory.
 - Audit: `npm audit --omit=dev`.
+
+## Frontend build (Tailwind CSS + TypeScript + esbuild)
+
+The client was migrated from hand-written CSS/JS to a small build toolchain:
+
+- `src/ts/*.ts` — TypeScript sources (`main.ts`, `login.ts`, plus `types`,
+  `i18n`, `dom`, `selection`, `socket`, `client-rules`). Strict mode is on;
+  `tsc --noEmit` must stay clean.
+- `src/css/tailwind.css` — the single Tailwind entrypoint. Medieval palette,
+  self-hosted fonts and card/role components live in `tailwind.config.js` and
+  the `@layer` blocks here.
+- Build outputs are committed: `src/css/app.css`, `src/js/main.js`,
+  `src/js/login.js`. They are served statically from `src/`, so a fresh clone
+  runs with `npm ci` alone. Keep them in sync with the sources.
+- **Build order matters**: `build:js` runs before `build:css`. Tailwind's content
+  scan includes `src/js/**/*.js`, so class names that exist only in the
+  generated JS (e.g. `currentTurn`, `chat-open`, `font-display`) are only
+  emitted if the JS is built first.
+- Everything is self-hosted (fonts in `src/fonts`, card sprites in `src/icons`,
+  the socket.io client from the server), so the CSP in `app.js` allows only
+  `'self'` — no CDN origins. Do not reintroduce CDN `<script>`/`<link>` tags.
+
+## Client UX notes
+
+- Card selection (`src/ts/selection.ts`): a plain click/tap toggles *all* copies
+  of a rank; Shift-click or a long-press (450 ms) toggles a single copy. Re-renders
+  preserve the current selection by card value (see `handKey`/`taxKey` in
+  `main.ts`) so the hand does not reset on every server update.
+- Responsive: cards are sized with the `--card-w`/`--card-h` CSS variables
+  (smaller under 640px), seats collapse to a 4-column grid, and the chat/score
+  sidebar becomes a slide-up bottom sheet on screens narrower than `lg`.
+- Panels toggled with `show()` (`#revolution-panel`, `#tax-panel`) must
+  not carry a bare `flex` utility alongside `hidden`: Tailwind emits the utility
+  layer after the component layer, so `flex` would always beat `hidden` and the
+  panel could never hide. Use the `.panel-flex` component class instead (defined
+  in `src/css/tailwind.css`).
+
 
 ## Architecture
 
@@ -62,8 +105,8 @@ required to create or join a room. `/healthz` is always reachable without auth.
   `sanitizeChat`, `createRateLimiter`.
 - `server/user-store.js` — SQLite (`better-sqlite3`) + bcryptjs user store.
 - `server/auth.js` — Passport local strategy + JSON login handler.
-- `src/js/main.js` — client controller. Server messages are i18n keys resolved by
-  `resolveMessage()`; never `eval` server data.
+- `src/ts/main.ts` (built to `src/js/main.js`) — client controller. Server
+  messages are i18n keys resolved by `resolveMessage()`; never `eval` server data.
 
 ## Rules model
 
@@ -127,9 +170,9 @@ required to create or join a room. `/healthz` is always reachable without auth.
   (`ensureAuth`). Display name is bound to the account name, so it cannot be
   spoofed. Tests pass `requireAuth: false` only for pure engine unit tests.
 - `NODE_ENV=production` requires `SESSION_SECRET` (throws otherwise).
-- CDN `<script>`/`<link>` tags carry SRI + `crossorigin="anonymous"`; the CSP in
-  `app.js` must list every allowed CDN host. Keep inline scripts out of HTML
-  (`script-src-attr 'none'` blocks inline handlers).
+- No third-party origins: fonts, sprites and the socket.io client are all served
+  from `src/`, so the CSP in `app.js` lists only `'self'` (+ `ws:`/`wss:`). Keep
+  inline scripts out of HTML (`script-src-attr 'none'` blocks inline handlers).
 - `data/`, `*.db`, `.env` are gitignored (the DB holds password hashes).
 
 ## Conventions

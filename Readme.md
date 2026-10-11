@@ -8,7 +8,8 @@
 - The game continues even if one user disconnect.
 - Real cards and real rules!
 - 3 differents language (English, Italian, Bulgarian).
-- Responsive Design.
+- Responsive, mobile-friendly medieval-themed UI (Tailwind CSS).
+- TypeScript client with strict type safety.
 - Leaderboard for ranking that update after every match.
 - Icon for every role plus pay taxes.
 
@@ -17,6 +18,23 @@
 
 <img src="screenshots/room.png">
 <img src="screenshots/cards.png">
+
+
+## Development
+
+The frontend is TypeScript (`src/ts`) + Tailwind CSS (`src/css/tailwind.css`),
+bundled with esbuild. The built files (`src/js/main.js`, `src/js/login.js`,
+`src/css/app.css`) are committed, so `npm ci && npm start` is enough to run.
+
+```bash
+npm install
+npm run build       # JS first, then CSS (Tailwind scans the built JS)
+npm run typecheck   # tsc --noEmit
+npm test            # node --test
+npm start           # http://localhost:8080
+```
+
+Run `npm run build` after editing anything under `src/ts` or `src/css`.
 
 
 Credits to the guy who started this project <a href="https://github.com/vlwkaos/simplified-dalmuti">vlwkaos/simplified-dalmuti</a>
