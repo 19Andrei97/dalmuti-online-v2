@@ -3,6 +3,7 @@
 const crypto = require("crypto");
 const { Player, Game, game_state, SEATS } = require("./config");
 const engine = require("./game-engine");
+const bot = require("./bot");
 const {
   sanitizeNickname,
   sanitizeRoomName,
@@ -25,6 +26,8 @@ class RoomManager {
     this.connectNumber = 1;
     this.tokens = new Map(); // reconnect token -> { room, sid }
     this.timers = new Map(); // room name -> active phase timer
+    this.botTimers = new Map(); // room name -> pending bot action timer
+    this.botDelayMs = opts.botDelayMs != null ? opts.botDelayMs : 700;
     this.taxWindowMs = opts.taxWindowMs != null ? opts.taxWindowMs : 20000;
     this.revolutionWindowMs =
       opts.revolutionWindowMs != null ? opts.revolutionWindowMs : 15000;
@@ -68,6 +71,71 @@ class RoomManager {
     return this.players(room).filter((p) => !p.spectator).length;
   }
 
+  botsIn(room) {
+    return this.players(room).filter((p) => p.isBot);
+  }
+
+  humanSeatedCount(room) {
+    return this.players(room).filter((p) => !p.spectator && !p.isBot).length;
+  }
+
+  // ---- bots ---------------------------------------------------------------
+
+  // Run a bot action after a short, human-like delay. Timers are tracked per
+  // room so they can be cancelled when the room empties or a game ends.
+  scheduleBot(room, fn) {
+    const timer = setTimeout(() => {
+      this.botTimers.delete(room.name);
+      fn();
+    }, this.botDelayMs);
+    if (timer.unref) timer.unref();
+    this.botTimers.set(room.name, timer);
+  }
+
+  clearBotTimers(room) {
+    const t = this.botTimers.get(room.name);
+    if (t) {
+      clearTimeout(t);
+      this.botTimers.delete(room.name);
+    }
+  }
+
+  // Decide what the bot currently on turn should do, then apply it exactly as a
+  // client play would.
+  runBotTurn(room) {
+    if (room.game.state !== game_state.PLAYING || room.phase) return;
+    const idx = room.game.cur_order_idx;
+    const entry = Object.entries(room.sockets).find(
+      ([, p]) => p.isBot && p.seat === idx
+    );
+    if (!entry) return;
+    const sid = entry[0];
+    const me = room.sockets[sid];
+    const selection = bot.choosePlay(me.hand, room.game.last, me.difficulty, this.rng);
+
+    if (!selection) {
+      if (room.game.last) {
+        room.game.cur_order[me.seat] = 0;
+        room.game.nextPlayer({});
+        this.broadcastRoom(room);
+      }
+      // Leading is always possible, so choosePlay returns a selection here.
+    } else {
+      this.applyPlay(room, sid, selection);
+    }
+    this.scheduleNextBotTurn(room);
+  }
+
+  // Queue a bot turn if the player now on turn is a bot (single-shot per room).
+  scheduleNextBotTurn(room) {
+    if (room.game.state !== game_state.PLAYING || room.phase) return;
+    if (this.botTimers.has(room.name)) return;
+    const idx = room.game.cur_order_idx;
+    const isBot = Object.values(room.sockets).some((p) => p.isBot && p.seat === idx);
+    if (!isBot) return;
+    this.scheduleBot(room, () => this.runBotTurn(room));
+  }
+
   // Public lobby view of a room (no hands).
   lobbyView() {
     const out = {};
@@ -94,6 +162,8 @@ class RoomManager {
         connected: p.connected,
         points: p.points,
         handCount: p.hand.length,
+        isBot: !!p.isBot,
+        difficulty: p.difficulty || null,
         role: room.game.roles ? room.game.roles[psid] || null : null,
       };
     }
@@ -114,6 +184,8 @@ class RoomManager {
       socialOrder: room.game.socialOrder,
       leaderBoard: room.leaderBoard,
       phase: room.phase || null,
+      host: room.hostSid || null,
+      canAddBot: this.seatedCount(room) < SEATS,
     };
   }
 
@@ -201,10 +273,14 @@ class RoomManager {
       if (!name) return this.alert(socket, "language.badRoomName");
       this.roomNumber++;
       const idRoom = `${this.roomNumber}-${name}`;
-      this.createRoom(idRoom, !!hide);
+      this.createRoom(idRoom, !!hide, socket.id);
       this.joinRoom(socket, idRoom);
       socket.emit("connectUrl", `/room/${encodeURIComponent(idRoom)}`);
     });
+
+    socket.on("add bot", (difficulty) => this.addBot(socket, difficulty));
+    socket.on("fill bots", (difficulty) => this.fillBots(socket, difficulty));
+    socket.on("remove bot", (botSid) => this.removeBot(socket, botSid));
 
     socket.on("join game room", (roomId) => {
       if (!this.ensureAuth(socket)) return;
@@ -253,7 +329,7 @@ class RoomManager {
 
   // ---- rooms --------------------------------------------------------------
 
-  createRoom(name, hide) {
+  createRoom(name, hide, hostSid = null) {
     const room = {
       name,
       hide,
@@ -263,6 +339,7 @@ class RoomManager {
       leaderBoard: null,
       finishedOrder: [],
       phase: null,
+      hostSid,
       createdAt: Date.now(),
     };
     (hide ? this.rooms.hide : this.rooms.open)[name] = room;
@@ -322,6 +399,93 @@ class RoomManager {
     };
   }
 
+  // ---- bots ---------------------------------------------------------------
+
+  // Add a bot to the host's room. Bots are auto-ready and never rejoin, so they
+  // are simply stored like a seat-holding player (without a socket).
+  addBot(socket, difficulty) {
+    if (!this.ensureAuth(socket)) return;
+    const entry = this.roomEntry(socket.userData.cur_room);
+    if (!entry) return this.alert(socket, "language.noRoom");
+    const { room } = entry;
+
+    if (room.hostSid !== socket.id) return this.alert(socket, "language.notHost");
+    if (room.game.state !== game_state.WAITING || room.phase) {
+      return this.alert(socket, "language.botNotNow");
+    }
+    if (!bot.isDifficulty(difficulty)) return this.alert(socket, "language.badBot");
+
+    const seat = room.seats.indexOf(false);
+    if (seat === -1) return this.alert(socket, "language.roomFull");
+
+    const sid = `bot-${crypto.randomBytes(8).toString("hex")}`;
+    const p = new Player(this.botName(difficulty), room.name);
+    p.sid = sid;
+    p.seat = seat;
+    p.ready = true;
+    p.isBot = true;
+    p.difficulty = difficulty;
+    p.connected = true;
+
+    room.seats[seat] = true;
+    room.sockets[sid] = p;
+
+    this.io.to(room.name).emit("chat connection", this.playerView(p));
+    this.broadcastRoom(room);
+    this.maybeAutoStart(room);
+  }
+
+  // Remove a bot from the room. Any seated human may do so while waiting.
+  removeBot(socket, botSid) {
+    if (!this.ensureAuth(socket)) return;
+    const entry = this.roomEntry(socket.userData.cur_room);
+    if (!entry) return;
+    const { room } = entry;
+    if (room.game.state !== game_state.WAITING || room.phase) {
+      return this.alert(socket, "language.botNotNow");
+    }
+    const p = room.sockets[botSid];
+    if (!p || !p.isBot) return this.alert(socket, "language.badBot");
+
+    room.seats[p.seat] = false;
+    delete room.sockets[botSid];
+    this.broadcastRoom(room);
+    this.broadcastLobby();
+  }
+
+  // Fill every empty seat with a bot of the host's chosen difficulty.
+  fillBots(socket, difficulty) {
+    if (!this.ensureAuth(socket)) return;
+    const entry = this.roomEntry(socket.userData.cur_room);
+    if (!entry) return this.alert(socket, "language.noRoom");
+    const { room } = entry;
+    if (room.hostSid !== socket.id) return this.alert(socket, "language.notHost");
+    if (room.game.state !== game_state.WAITING || room.phase) {
+      return this.alert(socket, "language.botNotNow");
+    }
+    const diff = bot.isDifficulty(difficulty) ? difficulty : bot.DIFFICULTY.MEDIUM;
+    while (this.seatedCount(room) < SEATS) {
+      if (room.seats.indexOf(false) === -1) break;
+      this.addBot(socket, diff);
+    }
+  }
+
+  botName(difficulty) {
+    this.botSeq = (this.botSeq || 0) + 1;
+    return `Bot ${this.botSeq}`;
+  }
+
+  // Start the hand once a human is present and every seated player (humans
+  // included) is ready. Bots are always ready, so adding them alone never
+  // starts the game - the host readies up when the table is set.
+  maybeAutoStart(room) {
+    if (room.game.state !== game_state.WAITING || room.phase) return;
+    if (this.humanSeatedCount(room) < 1) return;
+    if (this.seatedCount(room) < 2) return;
+    if (this.readyCount(room) !== this.seatedCount(room)) return;
+    this.startGame(room);
+  }
+
   leaveRoom(socket) {
     const name = socket.userData.cur_room;
     const entry = name !== "waiting room" ? this.roomEntry(name) : null;
@@ -346,10 +510,18 @@ class RoomManager {
       if (room.game.isOneLeft()) this.finishGame(room);
     }
 
-    if (Object.keys(room.sockets).length === 0) {
+    // Bots cannot exist without a human host, so drop the whole room (bots
+    // included) once the last human leaves.
+    const humans = Object.values(room.sockets).filter((p) => !p.isBot);
+    if (humans.length === 0) {
       delete store[room.name];
       this.clearPhase(room);
+      this.clearBotTimers(room);
       return;
+    }
+    // Hand the host role to another human if the host left.
+    if (room.hostSid === socket.id) {
+      room.hostSid = Object.values(room.sockets).find((p) => !p.isBot).sid;
     }
     this.broadcastRoom(room);
     this.broadcastLobby();
@@ -393,6 +565,8 @@ class RoomManager {
       socket.userData.points = previous.points;
       socket.userData.pointsReceived = previous.pointsReceived;
       socket.userData.spectator = previous.spectator;
+      // The host keeps host rights across a reconnect (new socket id).
+      if (room.hostSid === previous.sid) room.hostSid = socket.id;
       if (room.game.roles && previous.sid) {
         room.game.roles[socket.id] = room.game.roles[previous.sid];
         delete room.game.roles[previous.sid];
@@ -423,18 +597,12 @@ class RoomManager {
 
     socket.userData.ready = !socket.userData.ready;
     this.broadcastRoom(room);
-
-    if (
-      this.seatedCount(room) >= 2 &&
-      this.readyCount(room) === this.seatedCount(room) &&
-      room.game.state === game_state.WAITING
-    ) {
-      this.startGame(room);
-    }
+    this.maybeAutoStart(room);
   }
 
   startGame(room) {
     this.clearPhase(room);
+    this.clearBotTimers(room);
     const ready = this.players(room).filter((p) => p.ready && !p.spectator);
 
     // Social order: previous finishing order, or a draw for the first hand.
@@ -499,7 +667,19 @@ class RoomManager {
     // Refresh hands before prompting so the client has the dealt cards.
     this.broadcastRoom(room);
     for (const c of candidates) {
+      if (room.sockets[c.sid] && room.sockets[c.sid].isBot) continue;
       this.io.to(c.sid).emit("revolution phase", { greater: c.greater, deadline: room.phase.deadline });
+    }
+    // A bot that was dealt both Jokers always declares the revolution. Guard on
+    // the phase so a human declaring first cannot be re-resolved by this timer.
+    const botCandidate = candidates.find(
+      (c) => room.sockets[c.sid] && room.sockets[c.sid].isBot
+    );
+    if (botCandidate) {
+      this.scheduleBot(room, () => {
+        if (!room.phase || room.phase.type !== "revolution") return;
+        this.resolveRevolution(room, { sid: botCandidate.sid, greater: botCandidate.greater });
+      });
     }
     const timer = setTimeout(() => {
       if (!room.phase || room.phase.type !== "revolution") return;
@@ -571,7 +751,7 @@ class RoomManager {
     for (const tax of taxes) {
       const from = room.sockets[tax.from];
       const to = room.sockets[tax.to];
-      if (from) {
+      if (from && !from.isBot) {
         this.io.to(tax.from).emit("tax phase", {
           kind: tax.kind,
           role: "peon",
@@ -580,7 +760,7 @@ class RoomManager {
           deadline: room.phase.deadline,
         });
       }
-      if (to) {
+      if (to && !to.isBot) {
         this.io.to(tax.to).emit("tax phase", {
           kind: tax.kind,
           role: "dalmuti",
@@ -590,8 +770,42 @@ class RoomManager {
         });
       }
     }
+    // Bots submit their tax choice automatically.
+    if (taxes.some((t) => this.botInTax(room, t))) {
+      this.scheduleBot(room, () => this.runBotTax(room));
+    }
     const timer = setTimeout(() => this.resolveTaxes(room), this.taxWindowMs);
     this.timers.set(room.name, timer);
+  }
+
+  botInTax(room, tax) {
+    const from = room.sockets[tax.from];
+    const to = room.sockets[tax.to];
+    return (from && from.isBot) || (to && to.isBot);
+  }
+
+  // Have every bot involved in the current tax phase submit its cards at once,
+  // so a human partner is never left waiting on the timer.
+  runBotTax(room) {
+    const phase = room.phase;
+    if (!phase || phase.type !== "tax") return;
+    for (const tax of phase.taxes) {
+      const sides = [
+        { sid: tax.from, role: "peon" },
+        { sid: tax.to, role: "dalmuti" },
+      ];
+      for (const { sid, role } of sides) {
+        const p = room.sockets[sid];
+        if (!p || !p.isBot) continue;
+        const key = `${tax.kind}:${sid === tax.from ? "from" : "to"}`;
+        if (phase.submissions[key]) continue;
+        const cards = bot.chooseTax(p.hand, tax.count, role, p.difficulty, this.rng);
+        if (cards.length === tax.count) phase.submissions[key] = { sid, cards };
+      }
+    }
+    const need = phase.taxes.length * 2;
+    if (Object.keys(phase.submissions).length >= need) this.resolveTaxes(room);
+    else this.broadcastRoom(room);
   }
 
   submitTax(socket, selection) {
@@ -679,6 +893,7 @@ class RoomManager {
     this.clearPhase(room);
     room.game.state = game_state.PLAYING;
     this.broadcastRoom(room);
+    this.scheduleNextBotTurn(room);
   }
 
   // ---- play ---------------------------------------------------------------
@@ -705,11 +920,21 @@ class RoomManager {
       game.cur_order[me.seat] = 0;
       game.nextPlayer({});
       this.broadcastRoom(room);
+      this.scheduleNextBotTurn(room);
       return;
     }
 
     if (!engine.checkValidity(me.hand, selection)) return this.alert(socket, "language.wrongCard");
     if (!engine.checkRule(game.last, selection)) return this.alert(socket, "language.wrongCard");
+
+    this.applyPlay(room, socket.id, selection);
+  }
+
+  // Apply an already-validated play (from a human or a bot) and advance the turn.
+  applyPlay(room, sid, selection) {
+    const game = room.game;
+    const me = room.sockets[sid];
+    if (!me) return;
 
     me.hand = engine.applyPlay(me.hand, selection);
 
@@ -720,7 +945,7 @@ class RoomManager {
 
     if (me.hand.length === 0) {
       game.updateOrder(me.seat);
-      room.finishedOrder.push(socket.id);
+      room.finishedOrder.push(sid);
       this.io.to(room.name).emit("chat announce", "language.finished", "green", me.nickname);
       if (game.isOneLeft()) {
         this.finishGame(room);
@@ -730,6 +955,7 @@ class RoomManager {
 
     game.nextPlayer(selection);
     this.broadcastRoom(room);
+    this.scheduleNextBotTurn(room);
   }
 
   finishGame(room) {
@@ -747,8 +973,11 @@ class RoomManager {
     }));
 
     this.io.to(room.name).emit("chat announce", "language.ended", "red");
+    this.clearBotTimers(room);
     room.game.end();
     for (const p of this.players(room)) p.reset();
+    // Bots never send a ready event, so re-arm them for the next hand.
+    for (const p of this.botsIn(room)) p.ready = true;
     room.phase = null;
     this.broadcastRoom(room);
     this.broadcastLobby();

@@ -112,6 +112,8 @@
                             style="width:100%; margin: 5px;">PASS</button>
                         <button class="btn bg-success1 col-6 col-sm-3 font-weight-bold" id="ready-btn"
                             style="width:100%; margin: 5px;">READY</button>
+                        <button class="btn bg-primary1 col-6 col-sm-2 font-weight-bold" id="add-bot-btn"
+                            data-toggle="modal" data-target="#addBotModal" style="width:100%; margin: 5px;">ADD BOT</button>
                         <div class="col-5 col-sm-1" style="width:100%; margin: 5px;padding: 0;"><a id="home" href="/" class="btn bg-alert1 w-100 ml-0"><i class="material-icons">home</i></a></div>
                     </div>
                     <div class="row h-25">
@@ -149,6 +151,31 @@
                 </div>
             </div>
         </div>
+        <!-- Add Bot Modal-->
+        <div class="modal fade" id="addBotModal">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h4 id="addBotTitle" class="modal-title">Add a bot</h4>
+                        <button class="close" data-dismiss="modal">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <label id="botDifficultyLang" for="bot-difficulty" class="col-form-label">Difficulty:</label>
+                        <select id="bot-difficulty" class="form-control">
+                            <option value="easy">Easy</option>
+                            <option value="medium" selected>Medium</option>
+                            <option value="hard">Hard</option>
+                        </select>
+                        <div id="bot-list" class="mt-3"></div>
+                    </div>
+                    <div class="modal-footer">
+                        <button class="btn bg-primary1" id="fill-bots">Fill with bots</button>
+                        <button class="btn bg-success1" id="add-bot-confirm">Add</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         <!-- Share Room Modal-->
         <div class="modal fade bd-example-modal-lg" id="shareRoom">
             <div class="modal-dialog modal-lg">

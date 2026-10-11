@@ -1,14 +1,14 @@
-{ 
-    "title": "Il Grande Dalmuti", 
+{
+    "title": "Il Grande Dalmuti",
     "create": "Crea stanza",
     "join": "Unisciti ad una stanza",
-    "newRoomName": "Inserisci il nome della stanza:", 
+    "newRoomName": "Inserisci il nome della stanza:",
     "hide": "Stanza privata",
     "btnCreate": "Crea",
-    "titleNickModal": "Aggiorna il tuo profilo", 
+    "titleNickModal": "Aggiorna il tuo profilo",
     "setNickname": "Inserisci il nome:",
     "save": "Salva",
-    "btnJoin": "Unisciti", 
+    "btnJoin": "Unisciti",
     "info": "Informazioni",
     "howToPlay": "Come si gioca?",
     "room": "stanze",
@@ -45,7 +45,10 @@
     "roomFull": "La stanza è piena",
     "swap": " ha pagato le tasse a ",
     "placed": "ha giocato:",
-    "taxs": ["Inviato:", "Ricevuto:"],
+    "taxs": [
+        "Inviato:",
+        "Ricevuto:"
+    ],
     "leaderboard": "Classifica",
     "confirmPass": "Sei sicuro di voler passare?",
     "authRequired": "Accedi prima di entrare in una stanza.",
@@ -60,5 +63,19 @@
     "revolutionPrompt": "Hai entrambi i Jolly. Dichiarare una rivoluzione per annullare le tasse?",
     "revolutionPromptGreater": "Hai entrambi i Jolly come Grande Peone. Dichiarare una GRANDE RIVOLUZIONE per scambiare i posti?",
     "taxPeonPrompt": "Scegli le tue carte migliori da dare al Dalmuti:",
-    "taxDalmutiPrompt": "Scegli le carte da restituire al Peone:"
+    "taxDalmutiPrompt": "Scegli le carte da restituire al Peone:",
+    "addBot": "Aggiungi bot",
+    "addBotTitle": "Aggiungi un bot",
+    "botDifficulty": "Difficoltà:",
+    "difficultyEasy": "Facile",
+    "difficultyMedium": "Media",
+    "difficultyHard": "Difficile",
+    "botsTitle": "Bot",
+    "removeBot": "Rimuovi",
+    "botLabel": "BOT",
+    "notHost": "Solo il padrone della stanza può aggiungere bot.",
+    "botNotNow": "I bot si possono modificare solo durante l'attesa.",
+    "badBot": "Bot non valido.",
+    "fillBots": "Riempi con bot",
+    "botAdd": "Aggiungi"
 }

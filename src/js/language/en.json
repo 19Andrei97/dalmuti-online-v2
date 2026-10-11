@@ -1,14 +1,14 @@
-{ 
-    "title": "The Great Dalmuti", 
+{
+    "title": "The Great Dalmuti",
     "create": "Create Room",
     "join": "Join Room",
-    "newRoomName": "Enter the room name:", 
+    "newRoomName": "Enter the room name:",
     "hide": "Private room",
     "btnCreate": "Create",
-    "titleNickModal": "Update your profile", 
+    "titleNickModal": "Update your profile",
     "setNickname": "Enter a new nickname:",
     "save": "Save",
-    "btnJoin": "Join", 
+    "btnJoin": "Join",
     "info": "Information",
     "howToPlay": "How to play?",
     "room": "rooms",
@@ -45,7 +45,10 @@
     "roomFull": "Room is full",
     "swap": " paid his bills to ",
     "placed": "played:",
-    "taxs": ["Sent:", "Received:"],
+    "taxs": [
+        "Sent:",
+        "Received:"
+    ],
     "leaderboard": "Leaderboard",
     "confirmPass": "Are you sure you want to pass?",
     "authRequired": "Please log in before joining a room.",
@@ -60,5 +63,19 @@
     "revolutionPrompt": "You hold both Jokers. Declare a revolution to cancel the taxes?",
     "revolutionPromptGreater": "You hold both Jokers as Greater Peon. Declare a GREATER REVOLUTION to swap everyone's places?",
     "taxPeonPrompt": "Choose your best cards to give to the Dalmuti:",
-    "taxDalmutiPrompt": "Choose cards to return to the Peon:"
+    "taxDalmutiPrompt": "Choose cards to return to the Peon:",
+    "addBot": "Add bot",
+    "addBotTitle": "Add a bot",
+    "botDifficulty": "Difficulty:",
+    "difficultyEasy": "Easy",
+    "difficultyMedium": "Medium",
+    "difficultyHard": "Hard",
+    "botsTitle": "Bots",
+    "removeBot": "Remove",
+    "botLabel": "BOT",
+    "notHost": "Only the room host can add bots.",
+    "botNotNow": "Bots can only be changed while waiting.",
+    "badBot": "Invalid bot.",
+    "fillBots": "Fill with bots",
+    "botAdd": "Add"
 }
