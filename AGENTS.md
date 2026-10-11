@@ -156,12 +156,25 @@ The client was migrated from hand-written CSS/JS to a small build toolchain:
   rebuild the field, which would restart the flip animation. `whoPlayed` shows the
   player from `last.by` (not the current-turn seat), so the label matches the cards
   on the table.
-- Field cards flip via `.flip-inner` (`rotateY(180deg)` when `.active`). Two traps:
-  the entrance animation `.card-enter` must animate **opacity only** — a `transform`
-  keyframe with `both` fill keeps overriding `.flip-inner.active`'s rotateY at
-  animation-level priority, so the cards stay face-down; and `.active` must be added
-  after a forced reflow (`void field.offsetWidth`), otherwise the browser coalesces
-  insertion + class change and the 0.6s transition never runs.
+- Field cards flip via `.flip-inner` (`rotateY(180deg)` when `.active`). Three traps:
+  the entrance animation must **not** target `.flip-inner` at all — an opacity
+  keyframe (even opacity-only, with `both` fill) on the 3D-transformed element
+  forces a grouping context that flattens `transform-style: preserve-3d`, so the
+  back stays on top and the rank is never revealed. Animate the faces instead:
+  `.flip-inner.card-enter > .flip-face { animation: card-enter … }`. A `transform`
+  keyframe is worse still — it overrides `.flip-inner.active`'s rotateY at
+  animation-level priority. Also, `.active` must be added after a forced reflow
+  (`void field.offsetWidth`), otherwise the browser coalesces insertion + class
+  change and the 0.6s transition never runs.
+- Tailwind purges classes it cannot see in the source scan. `main.ts` builds
+  `role-${role}` and `cards ${cardClass(v)}` at runtime; the `role-*` rules live
+  in `tailwind.css` but are only emitted because `tailwind.config.js` safelists
+  them. Any new runtime-constructed class must be safelisted (or written as a
+  literal somewhere scannable).
+- `.card-row` overlaps its children with `margin-left: calc(var(--card-w) * -0.55)`
+  and the first child sits flush. A wrapped line's first child still keeps that
+  negative margin, so the row needs `padding-inline: calc(var(--card-w) * 0.55)`
+  to stop the leading card poking out of the container on narrow screens.
 - Private rooms live in `this.rooms.hide` and are never broadcast, so `lobbyView`
   only iterates `this.rooms.open`. The client's `appendGameRoom` renders each open
   room as a clickable row that emits `join game room`.

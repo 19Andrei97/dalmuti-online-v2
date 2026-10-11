@@ -912,6 +912,12 @@ video {
     border-radius: 8px;
   }
 
+  /* The negative overlap margin on the first card of every wrapped line would
+   * pull that card past the row's left edge; symmetric padding reserves room
+   * for it and keeps the row visually centred. */
+  .card-row {
+    padding-inline: calc(var(--card-w) * 0.55);
+  }
   /* A hand/field row overlaps its cards; the first card sits flush. */
   .card-row > .cards,
   .card-row > .fieldCards,
@@ -947,6 +953,11 @@ video {
     opacity: 0.28;
     pointer-events: none;
   }
+  .role-greaterDalmuti { background-image: url("/icons/greaterDalmuti.png"); opacity: 0.35; }
+  .role-lesserDalmuti { background-image: url("/icons/lesserDalmuti.png"); }
+  .role-merchant { background-image: url("/icons/merchant.png"); }
+  .role-lesserPeon { background-image: url("/icons/lesserPeon.png"); }
+  .role-greaterPeon { background-image: url("/icons/greaterPeon.png"); opacity: 0.35; }
 
   .badge {
   margin-left: 0.25rem;
@@ -1548,10 +1559,11 @@ video {
     inset: 0;
     transform: rotateY(180deg);
   }
-  /* Opacity-only on purpose: a `transform` here would keep overriding
-   * `.flip-inner.active`'s rotateY once the animation's `both` fill applied,
-   * leaving the cards showing only their backs. */
-  .card-enter {
+  /* Animate the faces, never `.flip-inner`. An opacity animation on the
+   * 3D-transformed element (even opacity-only, with `both` fill) forces a
+   * grouping context that flattens `transform-style: preserve-3d`, so the
+   * back stays on top and the rank is never revealed. */
+  .flip-inner.card-enter > .flip-face {
     animation: card-enter 0.28s ease-out both;
   }
 

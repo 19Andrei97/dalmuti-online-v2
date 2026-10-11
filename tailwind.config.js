@@ -3,6 +3,15 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   content: ["./src/**/*.html", "./src/ts/**/*.ts", "./src/js/**/*.js"],
+  // `main.ts` builds these class names at runtime (`role-${role}`), so the
+  // content scanner cannot see them and would purge the rules otherwise.
+  safelist: [
+    "role-greaterDalmuti",
+    "role-lesserDalmuti",
+    "role-merchant",
+    "role-lesserPeon",
+    "role-greaterPeon",
+  ],
   theme: {
     extend: {
       colors: {
