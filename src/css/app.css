@@ -1523,6 +1523,11 @@ video {
   --tw-backdrop-blur: blur(8px);
   backdrop-filter: var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia);
 }
+.transition {
+  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
   .flip-inner {
     position: relative;
     width: var(--card-w);
@@ -1543,6 +1548,9 @@ video {
     inset: 0;
     transform: rotateY(180deg);
   }
+  /* Opacity-only on purpose: a `transform` here would keep overriding
+   * `.flip-inner.active`'s rotateY once the animation's `both` fill applied,
+   * leaving the cards showing only their backs. */
   .card-enter {
     animation: card-enter 0.28s ease-out both;
   }
@@ -1581,11 +1589,9 @@ video {
 @keyframes card-enter {
   from {
     opacity: 0;
-    transform: translateY(14px);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
   }
 }
 

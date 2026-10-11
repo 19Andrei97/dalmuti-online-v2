@@ -830,6 +830,10 @@ function renderField(session: Session, data: RoomData): void {
     const inner = el("div", { class: "flip-inner card-enter", children: [back, face] });
     field.appendChild(inner);
   }
+  // Record the un-flipped state in a style recalc before adding `active`,
+  // otherwise the browser coalesces both changes and the rotateY transition
+  // never runs (cards would appear already flipped, or not at all).
+  void field.offsetWidth;
   window.requestAnimationFrame(() => {
     for (const inner of qsa(".flip-inner", field)) inner.classList.add("active");
   });
