@@ -14,20 +14,20 @@ const { RoomManager } = require("./server/room-manager");
 
 const PORT = process.env.PORT || 8080;
 const NODE_ENV = process.env.NODE_ENV || "development";
-// In production a real secret is mandatory; in development fall back to a fixed
-// value so local runs work without configuration.
-if (NODE_ENV === "production" && !process.env.SESSION_SECRET) {
-  throw new Error("SESSION_SECRET must be set in production");
+// The account system is deprecated: on the free tier the filesystem is
+// ephemeral, so accounts cannot persist. Default is guest-only; set
+// AUTH_ENABLED=true (with persistent storage) to re-enable login.
+const AUTH_ENABLED = String(process.env.AUTH_ENABLED).toLowerCase() === "true";
+// A stable secret is only needed for signed session cookies, which exist only
+// when auth is enabled. Requiring it otherwise would crash a guest-only deploy.
+if (AUTH_ENABLED && NODE_ENV === "production" && !process.env.SESSION_SECRET) {
+  throw new Error("SESSION_SECRET must be set in production when AUTH_ENABLED is true");
 }
 const SESSION_SECRET = process.env.SESSION_SECRET || "dev-only-insecure-secret";
 const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || "")
   .split(",")
   .map((s) => s.trim())
   .filter(Boolean);
-// The account system is deprecated: on the free tier the filesystem is
-// ephemeral, so accounts cannot persist. Default is guest-only; set
-// AUTH_ENABLED=true (with persistent storage) to re-enable login.
-const AUTH_ENABLED = String(process.env.AUTH_ENABLED).toLowerCase() === "true";
 
 function createServer(opts = {}) {
   const app = express();
