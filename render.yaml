@@ -1,0 +1,20 @@
+# Render Blueprint for the Great Dalmuti online game.
+# Deploy: Render dashboard -> New + -> Blueprint -> pick this repo -> Apply.
+services:
+  - type: web
+    name: dalmuti
+    runtime: node
+    plan: free
+    buildCommand: npm ci
+    startCommand: npm start
+    healthCheckPath: /healthz
+    autoDeployTrigger: commit
+    envVars:
+      - key: NODE_ENV
+        value: production
+      # The account system is deprecated on the free tier (no persistent disk),
+      # so the game runs guest-only. Flip to "true" with a paid disk to re-enable.
+      - key: AUTH_ENABLED
+        value: "false"
+      - key: SESSION_SECRET
+        generateValue: true

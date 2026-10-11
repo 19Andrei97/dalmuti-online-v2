@@ -67,20 +67,37 @@ $(function () {
   $("#leaderboard").children().eq(0).text(language.leaderboard);
   $("#leaderboard-media").children().eq(0).text(language.leaderboard);
 
-  // AUTH: load the logged-in user, then establish the socket identity.
-  function afterAuth(user) {
-    currentUser = user;
-    if (user) {
-      $(".nickname").text(user.username);
-      socket.emit("set new nickname", user.username, currentRoomId());
-    } else if (window.location.pathname !== "/login") {
-      window.location.href = "/login";
+  // AUTH / identity. The account system may be disabled (guest mode): then the
+  // player picks a nickname locally and no /login redirect happens.
+  let authEnabled = false;
+
+  function afterAuth(data) {
+    const username = data && data.authEnabled ? data.username : null;
+    authEnabled = !!(data && data.authEnabled);
+    currentUser = username ? { username } : null;
+
+    if (authEnabled) {
+      if (username) {
+        $(".nickname").text(username);
+        socket.emit("set new nickname", username, currentRoomId());
+      } else if (window.location.pathname !== "/login") {
+        window.location.href = "/login";
+      }
+      return;
+    }
+
+    // Guest mode: allow the nickname modal, restore any saved name.
+    $("#newName").attr("data-toggle", "modal");
+    const saved = localStorage.getItem("nickname");
+    if (saved) {
+      $(".nickname").text(saved);
+      socket.emit("set new nickname", saved, currentRoomId());
     }
   }
 
   $.getJSON("/api/me")
     .done(afterAuth)
-    .fail(() => afterAuth(null));
+    .fail(() => afterAuth({ authEnabled: false }));
 
   function currentRoomId() {
     const parts = window.location.pathname.split("/");
@@ -133,11 +150,19 @@ $(function () {
     socket.emit("leave room");
   });
 
-  // UPDATE NICKNAME (session username only)
+  // UPDATE NICKNAME. With auth on, the name is the account name; in guest mode
+  // the player's own choice is kept in localStorage.
   $("#set-nickname-ok").click(() => {
-    if (currentUser) {
-      $(".nickname").text(currentUser.username);
-      socket.emit("set new nickname", currentUser.username, currentRoomId());
+    const typed = $("#set-nickname").val();
+    if (authEnabled) {
+      if (currentUser) {
+        $(".nickname").text(currentUser.username);
+        socket.emit("set new nickname", currentUser.username, currentRoomId());
+      }
+    } else if (typed !== "") {
+      localStorage.setItem("nickname", typed);
+      $(".nickname").text(typed);
+      socket.emit("set new nickname", typed, currentRoomId());
     }
     $("#set-nickname").val("");
   });

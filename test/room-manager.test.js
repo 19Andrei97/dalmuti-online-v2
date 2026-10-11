@@ -21,7 +21,7 @@ function seededRng(seed) {
 
 const silent = { log() {}, error() {} };
 
-async function startServer() {
+async function startServer(overrides = {}) {
   const dbPath = path.join(os.tmpdir(), `dalmuti-test-${Date.now()}-${Math.random()}.db`);
   const server = createServer({
     dbPath,
@@ -29,6 +29,10 @@ async function startServer() {
     log: silent,
     taxWindowMs: 5000,
     revolutionWindowMs: 5000,
+    // The suite exercises the account system, so default it on. Guest-mode
+    // tests pass authEnabled: false explicitly.
+    authEnabled: true,
+    ...overrides,
   });
   await new Promise((r) => server.httpServer.listen(0, r));
   const port = server.httpServer.address().port;
@@ -453,6 +457,64 @@ test("health: authentication endpoints work end-to-end", async () => {
       body: JSON.stringify({ username: "player1", password: "wrongpass" }),
     });
     assert.equal(bad.status, 401);
+  } finally {
+    await ctx.stop();
+  }
+});
+
+test("healthz responds 200 without touching auth", async () => {
+  const ctx = await startServer({ authEnabled: false });
+  try {
+    const res = await fetch(`http://localhost:${ctx.port}/healthz`);
+    assert.equal(res.status, 200);
+    assert.deepEqual(await res.json(), { status: "ok" });
+  } finally {
+    await ctx.stop();
+  }
+});
+
+test("guest mode: an anonymous socket can create and play in a room", async () => {
+  const ctx = await startServer({ authEnabled: false });
+  try {
+    assert.equal(ctx.server.userStore, null, "no database in guest mode");
+
+    const me = await fetch(`http://localhost:${ctx.port}/api/me`);
+    assert.equal(me.status, 200);
+    assert.deepEqual(await me.json(), { authEnabled: false, username: null });
+
+    const reg = await fetch(`http://localhost:${ctx.port}/api/register`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ username: "nope", password: "password123" }),
+    });
+    assert.equal(reg.status, 403, "account creation disabled");
+
+    const a = await connect(ctx.port, { anon: true });
+    const b = await connect(ctx.port, { anon: true });
+    await delay(30);
+
+    a.emit("set new nickname", "Alice", "");
+    b.emit("set new nickname", "Bob", "");
+    await delay(20);
+
+    a.emit("create game room", "GuestRoom", false);
+    await delay(30);
+    const roomId = Object.keys(ctx.server.manager.rooms.open)[0];
+    assert.ok(roomId, "guest created a room id");
+
+    b.emit("join game room", roomId);
+    await delay(30);
+
+    assert.equal(ctx.server.manager.roomCount(), 1, "guest created a room");
+
+    // Guests can ready up and the game starts.
+    const start = once(a, "chat announce");
+    a.emit("ready");
+    b.emit("ready");
+    const key = await start;
+    assert.equal(key, "language.started");
+    a.close();
+    b.close();
   } finally {
     await ctx.stop();
   }
