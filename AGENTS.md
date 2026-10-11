@@ -96,6 +96,26 @@ required to create or join a room. `/healthz` is always reachable without auth.
   another human if the host leaves.
 - `roomView` exposes `isBot`/`difficulty` per player (bots show `handCount`
   only, like everyone else) plus `host` and `canAddBot` for the host's UI.
+- When the human whose turn it is leaves mid-hand, `removeFromRoom` keeps the
+  room alive (a human remains) and calls `scheduleNextBotTurn`, so a bot still
+  advances the turn instead of the hand stalling.
+
+## Last play / field rendering
+
+- `Game.nextPlayer(selected_card, playerSid)` records
+  `game.last = { num, count, by, handCount }` on a real play; a pass (`{}`) leaves
+  it untouched. Completing a round clears `last` and resets the turn to the first
+  playable seat (the leader). `room-manager` fills `last.handCount` after the
+  play so the client can tag a finisher as the winner.
+- The client renders the field from `roomData.last` (recipient view). `reloadField`
+  keys the rendered play as `${last.by}:${last.num}:${last.count}:${last.handCount}`
+  and returns early when the key is unchanged — an unrelated room refresh must not
+  rebuild the field, which would restart the flip animation. `whoPlayed` shows the
+  player from `last.by` (not the current-turn seat), so the label matches the cards
+  on the table.
+- Private rooms live in `this.rooms.hide` and are never broadcast, so `lobbyView`
+  only iterates `this.rooms.open`. The client's `appendGameRoom` renders each open
+  room as a clickable row that emits `join game room`.
 
 ## Security invariants (do not regress)
 

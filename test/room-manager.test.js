@@ -122,6 +122,65 @@ test("lobby view never leaks hands", async () => {
   }
 });
 
+test("private rooms are absent from the lobby view", async () => {
+  const ctx = await startServer();
+  try {
+    const a = await connect(ctx.port);
+    await delay(30);
+    a.emit("set new nickname", "Alice", "");
+    a.emit("create game room", "Public", false);
+    a.emit("create game room", "Secret", true);
+    await delay(80);
+
+    const view = ctx.server.manager.lobbyView();
+    assert.equal(Object.keys(view).includes("1-Public"), true);
+    assert.equal(Object.keys(view).includes("2-Secret"), false);
+    a.close();
+  } finally {
+    await ctx.stop();
+  }
+});
+
+test("room view reports who played last and how many cards they held", async () => {
+  const ctx = await startServer();
+  try {
+    const a = await connect(ctx.port);
+    const b = await connect(ctx.port);
+    await delay(50);
+    a.emit("set new nickname", "Alice", "");
+    a.emit("create game room", "LastPlay", false);
+    await delay(50);
+    const roomName = Object.keys(ctx.server.manager.rooms.open)[0];
+    b.emit("set new nickname", "Bob", "");
+    b.emit("join game room", roomName);
+    await delay(50);
+    a.emit("ready");
+    b.emit("ready");
+    await delay(80);
+
+    const room = ctx.server.manager.rooms.open[roomName];
+    settlePhases(ctx.server.manager, room);
+    const leaderId = room.game.socialOrder[0];
+    const leaderSock = leaderId === a.id ? a : b;
+    room.sockets[leaderId].hand = [1, 12];
+    room.game.cur_order_idx = room.sockets[leaderId].seat;
+    room.game.last = null;
+
+    leaderSock.emit("play", { 1: 1 });
+    await delay(80);
+
+    const view = ctx.server.manager.roomView(room, leaderId);
+    assert.equal(view.last.num, 1);
+    assert.equal(view.last.count, 1);
+    assert.equal(view.last.by, leaderId);
+    assert.equal(view.last.handCount, room.sockets[leaderId].hand.length);
+    a.close();
+    b.close();
+  } finally {
+    await ctx.stop();
+  }
+});
+
 test("per-recipient room view only contains the recipient's hand", async () => {
   const ctx = await startServer();
   try {

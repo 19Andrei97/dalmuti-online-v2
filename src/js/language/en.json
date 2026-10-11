@@ -77,5 +77,6 @@
     "botNotNow": "Bots can only be changed while waiting.",
     "badBot": "Invalid bot.",
     "fillBots": "Fill with bots",
-    "botAdd": "Add"
+    "botAdd": "Add",
+    "fullscreen": "Fullscreen"
 }

@@ -76,6 +76,18 @@ $(function () {
   $("#bot-difficulty option[value='easy']").text(language.difficultyEasy);
   $("#bot-difficulty option[value='medium']").text(language.difficultyMedium);
   $("#bot-difficulty option[value='hard']").text(language.difficultyHard);
+  $("#fullscreen-btn").text(language.fullscreen);
+
+  // Fullscreen toggle so the table can fill the screen on small devices.
+  $("#fullscreen-btn").on("click", () => {
+    if (!document.fullscreenElement) {
+      if (document.documentElement.requestFullscreen) {
+        document.documentElement.requestFullscreen();
+      }
+    } else if (document.exitFullscreen) {
+      document.exitFullscreen();
+    }
+  });
 
   // AUTH / identity. The account system may be disabled (guest mode): then the
   // player picks a nickname locally and no /login redirect happens.
@@ -249,14 +261,20 @@ $(function () {
   // PLAY / PASS
   $("#play-btn").on("click", () => {
     if ($("#play-btn").hasClass("disabled")) return;
-    if (
-      $("#play-btn").text() === language.pass &&
-      $("#field-section").children().length === 0
-    ) {
-      if (confirm(language.confirmPass)) socket.emit("play", selected_card);
-    } else {
+    const rd = window.roomData;
+    const hasSelection = Object.keys(selected_card).length > 0;
+    const tableEmpty = !(rd && rd.last && rd.last.num);
+
+    if (hasSelection) {
       socket.emit("play", selected_card);
+      return;
     }
+    // Nothing selected: passing is only legal once someone has played.
+    if (tableEmpty) {
+      alert_big(language.mustPlay);
+      return;
+    }
+    if (confirm(language.confirmPass)) socket.emit("play", {});
   });
 
   // LOBBY ROOM LIST
@@ -271,6 +289,26 @@ $(function () {
       `${language.title} <br><strong>${roomCount} ${language.room} | ${user_count} ${language.usersOnline}</strong>`
     );
   });
+
+  // One clickable row per open room in the lobby.
+  function appendGameRoom(name, playerCount, state) {
+    let status = "";
+    if (state === game_state.WAITING) status = language.wait;
+    else if (state === game_state.PLAYING) status = language.playing;
+
+    const $newRoom = $("<div>")
+      .addClass("p-4 w-100 mt-2 game-room rounded bg-secondary1")
+      .text(
+        `${language.roomTitle} ${name} ${language.players} ${playerCount} / 8 - ${status}`
+      );
+    $newRoom.on("click", () => {
+      showLoadingText();
+      socket.emit("join game room", name);
+      $("#chat-messages").empty();
+      $("#chat-messages-media").empty();
+    });
+    $("#room-list").append($newRoom);
+  }
 
   // SENDER UPDATE
   socket.on("update sender", (user) => {
@@ -437,13 +475,24 @@ $(function () {
     $("#play-btn").addClass("disabled");
 
     const cur = roomData.state === game_state.PLAYING ? roomData.cur_order_idx : -1;
+    let myTurn = false;
     for (const [sid, userData] of Object.entries(roomData.players)) {
       if (cur === userData.seat && sid === roomData.you) {
         $("#play-btn").removeClass("disabled");
         $("#player" + cur).parent().addClass("currentTurn");
+        myTurn = true;
       } else if (cur === userData.seat) {
         $("#player" + cur).parent().addClass("currentTurn");
       }
+    }
+
+    // A clear prompt so it is obvious when the game waits on you.
+    if (roomData.state === game_state.PLAYING) {
+      $("#turn-hint")
+        .toggleClass("d-none", !myTurn)
+        .text(myTurn ? language.yourTurn : "");
+    } else {
+      $("#turn-hint").addClass("d-none").text("");
     }
   }
 
@@ -521,6 +570,9 @@ $(function () {
     "seamstress", "mason", "cook", "shepherdess", "stonecutter", "peasant", "jolly",
   ];
   var selected_card = {};
+  // Identifies the play currently rendered on the field so an unrelated room
+  // refresh does not rebuild it (and restart the flip animation).
+  var lastPlayedKey = null;
 
   function reloadCards(roomData) {
     selected_card = {};
@@ -558,23 +610,31 @@ $(function () {
   }
 
   function reloadField(roomData) {
-    $("#whoPlayed").empty();
-    $("#field-section").empty();
-    if (roomData.state !== game_state.PLAYING || !roomData.last) return;
-    if (!roomData.last.num) return;
+    const playing = roomData.state === game_state.PLAYING;
+    const last = playing ? roomData.last : null;
 
-    const last = roomData.last;
+    // Nothing new was played: leave the current field (and its flip animation)
+    // untouched. Otherwise every unrelated refresh would restart the flip.
+    const key = last
+      ? `${last.by}:${last.num}:${last.count}:${last.handCount}`
+      : "empty";
+    if (key === lastPlayedKey) return;
+
+    lastPlayedKey = key;
+    $("#field-section").empty();
+    $("#whoPlayed").empty();
+    if (!last || !last.num) return;
+
     const lastArray = [];
     for (let i = 0; i < last.count; i++) lastArray.push(last.num);
 
-    const who = roomData.socialOrder
-      ? roomData.players[
-          Object.keys(roomData.players).find(
-            (sid) => roomData.players[sid].seat === roomData.cur_order_idx
-          )
-        ]
-      : null;
-    if (who) $("#whoPlayed").text(`${who.nickname} ${language.placed}`);
+    const who = last.by ? roomData.players[last.by] : null;
+    if (who) {
+      const finished =
+        typeof last.handCount === "number" && last.handCount === 0;
+      const tag = finished ? language.winner : language.placed;
+      $("#whoPlayed").text(`${who.nickname} ${tag}`).addClass("fieldInfo");
+    }
 
     for (let i = 0; i < lastArray.length; i++) {
       const $carddiv = $("<div>")

@@ -190,6 +190,32 @@ test("Game.nextPlayer advances and resolves a completed round", () => {
   assert.equal(game.cur_order.slice(2).every((v) => v === -1), true);
 });
 
+test("Game.nextPlayer records who played last and resets the round to the leader", () => {
+  const game = new Game();
+  const roomData = {
+    sockets: { s0: { seat: 0 }, s1: { seat: 1 }, s2: { seat: 2 } },
+  };
+  game.begin(roomData, ["s0", "s1", "s2"]);
+
+  // s0 plays; the field remembers the player and the rank/count.
+  game.nextPlayer({ 7: 2 }, "s0");
+  assert.deepEqual(game.last, { num: 7, count: 2, by: "s0", handCount: null });
+
+  // s1 passes: the turn moves but the last play is untouched.
+  game.nextPlayer({}, "s1");
+  assert.equal(game.last.by, "s0");
+  assert.equal(game.last.num, 7);
+
+  // Everyone else passes, ending the round. The field is cleared and the turn
+  // returns to the first still-playing seat.
+  game.cur_order[1] = 0;
+  game.cur_order[2] = 0;
+  const roundOver = game.nextPlayer({}, "s2");
+  assert.equal(roundOver, true);
+  assert.equal(game.last, null);
+  assert.equal(game.cur_order_idx, 0);
+});
+
 test("Game.begin places the Greater Dalmuti first regardless of seat numbering", () => {
   const game = new Game();
   const roomData = {
