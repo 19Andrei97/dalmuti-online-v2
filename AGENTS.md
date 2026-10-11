@@ -49,6 +49,11 @@ required to create or join a room. `/healthz` is always reachable without auth.
 - `server/game-engine.js` — pure, transport-free rules: `shuffle`, `deal`,
   `drawForOrder`, `revolutionCandidates`, `computeRoles`, `roleOf`, `computeTaxes`,
   `validateSelection`, `checkValidity`, `checkRule`, `applyPlay`, `reverseOrder`.
+- `server/bot.js` — pure bot strategies (no room/transport state). `choosePlay`
+  and `chooseTax` for three difficulties (`easy` random, `medium` sheds its
+  worst legal cards, `hard` wins when it can and otherwise preserves Jokers).
+  `enumeratePlays` filters candidates through `engine.checkRule`, so a bot can
+  never emit an illegal move.
 - `server/room-manager.js` — `RoomManager(io, opts)`. Owns rooms, dealing,
   revolution/tax phases, play, reconnection, views. Injectable `rng` for tests.
 - `server/config.js` — `Player`, `Game`, `game_state` (`WAITING=0, PLAYING=1,
@@ -72,6 +77,25 @@ required to create or join a room. `/healthz` is always reachable without auth.
 - Taxes are interactive: peon picks cards to give, dalmuti picks cards to return,
   with a timed auto-fallback (`resolveTaxes`).
 - Leader must play when the table is empty (server-enforced; `language.mustPlay`).
+
+## Bots
+
+- Only the room host may add bots, and only while `WAITING` (`addBot`,
+  `fillBots`, `removeBot`). `addBot`/`fillBots` take a difficulty; a bot occupies
+  a real seat, is always `ready`, and is stored in `room.sockets` keyed by a
+  synthetic `bot-<hex>` sid (no live socket).
+- Bots are auto-started into a hand via `maybeAutoStart`: the hand begins only
+  once at least one human is seated and every seated player (humans + bots) is
+  ready. Adding bots alone never starts the game.
+- Bots act on a timer (`scheduleBot`, `botDelayMs`, default 700ms): revolution
+  (a bot dealt both Jokers always declares), tax (`runBotTax`), and play
+  (`scheduleNextBotTurn`/`runBotTurn`). Bot turns reuse `applyPlay`, so the rules
+  path is identical to a human's.
+- Bots cannot outlive their host: when the last human leaves a room, the whole
+  room (bots included) is dropped. `removeFromRoom` hands the host role to
+  another human if the host leaves.
+- `roomView` exposes `isBot`/`difficulty` per player (bots show `handCount`
+  only, like everyone else) plus `host` and `canAddBot` for the host's UI.
 
 ## Security invariants (do not regress)
 

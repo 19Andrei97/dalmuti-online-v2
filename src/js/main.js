@@ -9,10 +9,12 @@ $(window).on("resize", () => {
 });
 
 // Server messages are language keys (e.g. "language.started"); resolve them
-// against the loaded dictionary instead of eval().
+// against the loaded dictionary instead of eval(). The dictionary keys omit the
+// leading "language." namespace, so strip it before the lookup.
 function resolveMessage(key) {
   if (typeof key !== "string") return String(key);
   const parts = key.split(".");
+  if (parts[0] === "language") parts.shift();
   let value = window.language;
   for (const part of parts) {
     if (value == null) break;
@@ -66,6 +68,14 @@ $(function () {
   $("#message-input-media").attr("placeholder", language.write);
   $("#leaderboard").children().eq(0).text(language.leaderboard);
   $("#leaderboard-media").children().eq(0).text(language.leaderboard);
+  $("#add-bot-btn").text(language.addBot);
+  $("#addBotTitle").text(language.addBotTitle);
+  $("#botDifficultyLang").text(language.botDifficulty);
+  $("#add-bot-confirm").text(language.botAdd);
+  $("#fill-bots").text(language.fillBots);
+  $("#bot-difficulty option[value='easy']").text(language.difficultyEasy);
+  $("#bot-difficulty option[value='medium']").text(language.difficultyMedium);
+  $("#bot-difficulty option[value='hard']").text(language.difficultyHard);
 
   // AUTH / identity. The account system may be disabled (guest mode): then the
   // player picks a nickname locally and no /login redirect happens.
@@ -203,6 +213,39 @@ $(function () {
     }
   });
 
+  // BOTS: add (single) / fill / remove
+  $("#add-bot-confirm").on("click", () => {
+    socket.emit("add bot", $("#bot-difficulty").val());
+  });
+  $("#fill-bots").on("click", () => {
+    socket.emit("fill bots", $("#bot-difficulty").val());
+  });
+
+  function difficultyLabel(diff) {
+    if (diff === "easy") return language.difficultyEasy;
+    if (diff === "hard") return language.difficultyHard;
+    return language.difficultyMedium;
+  }
+
+  function renderBotList(roomData) {
+    const bots = Object.entries(roomData.players).filter(([, u]) => u.isBot);
+    $("#bot-list").empty();
+    if (!bots.length) return;
+    $("#bot-list").append(
+      $("<div>").addClass("font-weight-bold").text(language.botsTitle)
+    );
+    for (const [sid, u] of bots) {
+      const $row = $("<div>").addClass("d-flex justify-content-between align-items-center my-1");
+      $row.append($("<span>").text(`${u.nickname} (${difficultyLabel(u.difficulty)})`));
+      $("<button>")
+        .addClass("btn btn-sm bg-alert1")
+        .text(language.removeBot)
+        .on("click", () => socket.emit("remove bot", sid))
+        .appendTo($row);
+      $("#bot-list").append($row);
+    }
+  }
+
   // PLAY / PASS
   $("#play-btn").on("click", () => {
     if ($("#play-btn").hasClass("disabled")) return;
@@ -251,6 +294,14 @@ $(function () {
       $("#home").removeClass("disabled");
       $("#ready-btn").text(language.ready);
     }
+
+    // Only the host can manage bots, and only while waiting for a game.
+    if (roomData.you === roomData.host && roomData.state === game_state.WAITING) {
+      $("#add-bot-btn").show().prop("disabled", !roomData.canAddBot);
+    } else {
+      $("#add-bot-btn").hide();
+    }
+    renderBotList(roomData);
 
     reloadSlots(roomData);
     reloadCards(roomData);
@@ -416,8 +467,12 @@ $(function () {
 
     for (const seat of Object.keys(bySeat)) {
       const { sid, user } = bySeat[seat];
+      const $name = $("<b>").text(user.nickname);
+      if (user.isBot) {
+        $name.append($("<span>").addClass("badge badge-secondary ml-1").text(language.botLabel));
+      }
       $("#player" + seat).append(
-        $("<div>", { id: sid }).append($("<b>").text(user.nickname)),
+        $("<div>", { id: sid }).append($name),
         $("<div>").addClass("fontMediaSlots").text(`${language.cards} ${user.handCount}`)
       );
       if (roomData.state === game_state.WAITING) {

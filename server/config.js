@@ -16,6 +16,9 @@ class Player {
     this.pointsReceived = false;
     this.spectator = false;
     this.connected = true;
+    // Bots hold a seat like a player but have no socket and are always ready.
+    this.isBot = false;
+    this.difficulty = null;
   }
 
   reset() {
