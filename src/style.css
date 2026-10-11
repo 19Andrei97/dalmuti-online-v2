@@ -161,6 +161,18 @@ a {
   padding-right: 0px !important;
 }
 
+/* Highlights the player who played the cards currently on the field. */
+.fieldInfo {
+  color: var(--primary1);
+  font-size: 1.05rem;
+  font-weight: bold;
+}
+
+/* Prompt shown when the game is waiting on this player. */
+#turn-hint {
+  color: var(--alert1);
+}
+
 .bg-success1 {
   background-color: var(--success1) !important;
 }

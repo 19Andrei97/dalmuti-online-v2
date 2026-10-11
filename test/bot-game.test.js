@@ -185,6 +185,40 @@ test("leaving removes the room when no humans remain (bots are not left behind)"
   assert.equal(manager.botsIn(room).length, 1, "stale room object is simply discarded");
 });
 
+test("a bot takes over the turn when the human whose turn it is leaves", () => {
+  const { manager } = makeManager({ botDelayMs: 100000 });
+  const room = manager.createRoom("takeover", false, "host");
+  const host = fakeSocket("host", "takeover");
+  const h1 = addHuman(manager, room, "h1");
+  const h2 = addHuman(manager, room, "h2", { ready: true });
+  manager.addBot(host, "hard");
+  const bot = manager.botsIn(room)[0];
+
+  // Put the room into PLAYING with the turn on h2.
+  room.game.state = game_state.PLAYING;
+  room.game.order = new Array(SEATS).fill(false);
+  room.game.cur_order = new Array(SEATS).fill(-1);
+  for (const seat of [h1.seat, h2.seat, bot.seat]) {
+    room.game.order[seat] = true;
+    room.game.cur_order[seat] = 1;
+  }
+  room.game.cur_order_idx = h2.seat;
+  manager.clearBotTimers(room);
+
+  const h2sock = fakeSocket("h2", "takeover");
+  h2sock.userData = h2;
+  manager.removeFromRoom(h2sock, room, manager.rooms.open);
+
+  // A human still remains, so the room survives and the bot is scheduled.
+  assert.ok(manager.rooms.open["takeover"], "room kept while a human remains");
+  assert.equal(
+    manager.botTimers.has("takeover"),
+    true,
+    "bot turn scheduled after the human left"
+  );
+  manager.clearBotTimers(room);
+});
+
 // ---- end-to-end over sockets ---------------------------------------------
 
 async function startServer(overrides = {}) {

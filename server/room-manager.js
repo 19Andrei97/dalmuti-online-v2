@@ -136,7 +136,8 @@ class RoomManager {
     this.scheduleBot(room, () => this.runBotTurn(room));
   }
 
-  // Public lobby view of a room (no hands).
+  // Public lobby view of a room (no hands). Private rooms live in a separate
+  // map and are deliberately never listed here.
   lobbyView() {
     const out = {};
     for (const [name, room] of Object.entries(this.rooms.open)) {
@@ -508,6 +509,7 @@ class RoomManager {
       room.game.updateOrder(seat);
       if (room.game.cur_order_idx === seat) room.game.nextPlayer({});
       if (room.game.isOneLeft()) this.finishGame(room);
+      else this.scheduleNextBotTurn(room);
     }
 
     // Bots cannot exist without a human host, so drop the whole room (bots
@@ -953,7 +955,8 @@ class RoomManager {
       }
     }
 
-    game.nextPlayer(selection);
+    game.nextPlayer(selection, sid);
+    if (game.last) game.last.handCount = me.hand.length;
     this.broadcastRoom(room);
     this.scheduleNextBotTurn(room);
   }

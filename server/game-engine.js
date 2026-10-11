@@ -319,7 +319,7 @@ class Game {
     if (this.cur_order) this.cur_order[seat] = -1;
   }
 
-  nextPlayer(selected_card) {
+  nextPlayer(selected_card, playerSid) {
     if (!this.cur_order) return undefined;
     this.cur_order_idx = (this.cur_order_idx + 1) % this.cur_order.length;
     while (this.cur_order[this.cur_order_idx] < 1) {
@@ -327,7 +327,7 @@ class Game {
     }
 
     if (selected_card && Object.keys(selected_card).length > 0) {
-      this.last = { num: null, count: 0 };
+      this.last = { num: null, count: 0, by: playerSid || null, handCount: null };
       for (const [card, val] of Object.entries(selected_card)) {
         if (Number(card) !== JOKER) this.last.num = Number(card);
         this.last.count += val;
@@ -347,6 +347,7 @@ class Game {
       this.cur_order[i] = this.order[i] ? 1 : -1;
     }
     this.last = null;
+    this.cur_order_idx = firstPlayableSeat(this.cur_order);
     return true;
   }
 
