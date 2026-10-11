@@ -47,5 +47,18 @@
     "placed": "played:",
     "taxs": ["Sent:", "Received:"],
     "leaderboard": "Leaderboard",
-    "confirmPass": "Are you sure you want to pass?"
+    "confirmPass": "Are you sure you want to pass?",
+    "authRequired": "Please log in before joining a room.",
+    "badNickname": "Please choose a valid nickname (1-20 characters).",
+    "badRoomName": "Please choose a valid room name.",
+    "rateLimited": "Too many requests. Please slow down.",
+    "tooManyRooms": "The lobby is full. Try again later.",
+    "mustPlay": "You must play a card when the table is empty.",
+    "noRevolution": "No revolution was declared.",
+    "revolution": "called a revolution! Taxes are cancelled.",
+    "greaterRevolution": "called a GREATER REVOLUTION! Everyone swaps places.",
+    "revolutionPrompt": "You hold both Jokers. Declare a revolution to cancel the taxes?",
+    "revolutionPromptGreater": "You hold both Jokers as Greater Peon. Declare a GREATER REVOLUTION to swap everyone's places?",
+    "taxPeonPrompt": "Choose your best cards to give to the Dalmuti:",
+    "taxDalmutiPrompt": "Choose cards to return to the Peon:"
 }

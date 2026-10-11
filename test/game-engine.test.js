@@ -1,0 +1,200 @@
+"use strict";
+
+const test = require("node:test");
+const assert = require("node:assert/strict");
+
+const {
+  prepareDeck,
+  shuffle,
+  validateSelection,
+  checkValidity,
+  checkRule,
+  applyPlay,
+  computeRoles,
+  drawForOrder,
+  deal,
+  computeTaxes,
+  peonBestCards,
+  dalmutiWorstCards,
+  removeCards,
+  revolutionCandidates,
+  reverseOrder,
+  Game,
+  game_state,
+  ROLE,
+  JOKER,
+} = require("../server/game-engine");
+
+test("deck composition: 80 cards, rank counts equal to rank, two Jokers", () => {
+  const deck = prepareDeck();
+  assert.equal(deck.length, 80);
+  for (let rank = 1; rank <= 12; rank++) {
+    assert.equal(deck.filter((c) => c === rank).length, rank, `rank ${rank}`);
+  }
+  assert.equal(deck.filter((c) => c === JOKER).length, 2);
+});
+
+test("shuffle preserves the multiset of cards", () => {
+  const deck = prepareDeck();
+  const shuffled = shuffle(deck);
+  assert.deepEqual(shuffled.slice().sort((a, b) => a - b), deck.slice().sort((a, b) => a - b));
+});
+
+test("validateSelection rejects prototype pollution, non-integers and bad counts", () => {
+  assert.equal(validateSelection({ 1: 1 })[1], 1);
+  assert.equal(validateSelection(null), null);
+  assert.equal(validateSelection([]), null);
+  assert.equal(validateSelection("x"), null);
+  assert.equal(validateSelection({ 1: -1 }), null);
+  assert.equal(validateSelection({ 1: 0 }), null);
+  assert.equal(validateSelection({ 1: 1.5 }), null);
+  assert.equal(validateSelection({ 14: 1 }), null);
+  assert.equal(validateSelection({ abc: 1 }), null);
+  assert.equal(validateSelection(JSON.parse('{"__proto__": {"polluted": 1}}')), null);
+  assert.equal({}.polluted, undefined);
+});
+
+test("checkValidity only allows cards that are actually held", () => {
+  assert.equal(checkValidity([1, 2, 2, 3], { 2: 2 }), true);
+  assert.equal(checkValidity([1, 2, 2, 3], { 2: 3 }), false);
+  assert.equal(checkValidity([1, 2, 2, 3], { 5: 1 }), false);
+});
+
+test("checkRule: leading rules", () => {
+  assert.equal(checkRule(null, { 5: 1 }), true);
+  assert.equal(checkRule(null, { 13: 1 }), false);
+  assert.equal(checkRule(null, { 5: 1, 6: 1 }), false);
+  assert.equal(checkRule(null, { 5: 1, 13: 1 }), true);
+  assert.equal(checkRule(null, { 5: 1, 6: 1, 7: 1 }), false);
+});
+
+test("checkRule: following rules (count and rank)", () => {
+  const last = { num: 5, count: 2 };
+  assert.equal(checkRule(last, { 3: 2 }), true);
+  assert.equal(checkRule(last, { 5: 2 }), false);
+  assert.equal(checkRule(last, { 6: 2 }), false);
+  assert.equal(checkRule(last, { 3: 1 }), false);
+  assert.equal(checkRule(last, { 3: 1, 13: 1 }), true);
+  assert.equal(checkRule(last, { 13: 2 }), false);
+});
+
+test("applyPlay removes exactly the selected cards and keeps a sorted numeric hand", () => {
+  const hand = [1, 2, 2, 3, 13];
+  const result = applyPlay(hand, { 2: 2, 13: 1 });
+  assert.deepEqual(result, [1, 3]);
+});
+
+test("computeRoles assigns the expected social classes", () => {
+  const order = ["a", "b", "c", "d", "e"];
+  const roles = computeRoles(order);
+  assert.equal(roles.a, ROLE.GREATER_DALMUTI);
+  assert.equal(roles.b, ROLE.LESSER_DALMUTI);
+  assert.equal(roles.c, ROLE.MERCHANT);
+  assert.equal(roles.d, ROLE.LESSER_PEON);
+  assert.equal(roles.e, ROLE.GREATER_PEON);
+
+  const three = computeRoles(["a", "b", "c"]);
+  assert.equal(three.a, ROLE.GREATER_DALMUTI);
+  assert.equal(three.b, ROLE.MERCHANT);
+  assert.equal(three.c, ROLE.GREATER_PEON);
+});
+
+test("deal gives every card and higher-ranked players get the extras", () => {
+  const order = ["a", "b", "c", "d", "e", "f", "g"];
+  const hands = deal(prepareDeck(), order);
+  const all = order.flatMap((sid) => hands[sid]);
+  assert.equal(all.length, 80, "all cards dealt");
+  const sizes = order.map((sid) => hands[sid].length);
+  assert.deepEqual(sizes, [12, 12, 12, 11, 11, 11, 11]);
+});
+
+test("drawForOrder seats the best card first (deterministic rng)", () => {
+  const order = drawForOrder(["a", "b"], () => 0);
+  assert.equal(order.length, 2);
+});
+
+test("revolution candidates: both Jokers, Greater Peon triggers a greater revolution", () => {
+  const hands = {
+    a: [1, 2],
+    b: [JOKER, JOKER, 5],
+    c: [3, 4],
+  };
+  const roles = { a: ROLE.GREATER_DALMUTI, b: ROLE.GREATER_PEON, c: ROLE.MERCHANT };
+  const cands = revolutionCandidates(hands, roles);
+  assert.equal(cands.length, 1);
+  assert.equal(cands[0].sid, "b");
+  assert.equal(cands[0].greater, true);
+  assert.deepEqual(reverseOrder(["a", "b", "c"]), ["c", "b", "a"]);
+});
+
+test("taxes: greater peon owes 2 to dalmuti, lesser owes 1", () => {
+  const roles = {
+    a: ROLE.GREATER_DALMUTI,
+    b: ROLE.LESSER_DALMUTI,
+    c: ROLE.MERCHANT,
+    d: ROLE.LESSER_PEON,
+    e: ROLE.GREATER_PEON,
+  };
+  const taxes = computeTaxes(roles);
+  assert.equal(taxes.length, 2);
+  assert.deepEqual(taxes[0], { kind: "greater", from: "e", to: "a", count: 2 });
+  assert.deepEqual(taxes[1], { kind: "lesser", from: "d", to: "b", count: 1 });
+});
+
+test("peon surrenders best (lowest) cards, never a Joker; dalmuti returns worst", () => {
+  const peonHand = [1, 5, 13, 12];
+  assert.deepEqual(peonBestCards(peonHand, 2), [1, 5]);
+  const dalmutiHand = [1, 2, 11, 12];
+  assert.deepEqual(dalmutiWorstCards(dalmutiHand, 2), [12, 11]);
+});
+
+test("removeCards removes exactly the given cards", () => {
+  assert.deepEqual(removeCards([1, 2, 3, 3], [3, 1]), [2, 3]);
+});
+
+test("Game turn management: round resets and win detection", () => {
+  const game = new Game();
+  const roomData = {
+    sockets: {
+      s0: { seat: 0, hand: [] },
+      s1: { seat: 1, hand: [] },
+      s2: { seat: 2, hand: [] },
+    },
+  };
+  game.begin(roomData, ["s0", "s1", "s2"]);
+  assert.equal(game.state, game_state.PLAYING);
+  assert.equal(game.cur_order_idx, 0, "Greater Dalmuti leads");
+
+  game.updateOrder(0);
+  game.updateOrder(1);
+  assert.equal(game.isOneLeft(), true);
+
+  game.updateOrder(2);
+  assert.equal(game.isOneLeft(), true);
+  game.end();
+  assert.equal(game.state, game_state.WAITING);
+});
+
+test("Game.nextPlayer advances and resolves a completed round", () => {
+  const game = new Game();
+  const roomData = {
+    sockets: { s0: { seat: 0 }, s1: { seat: 1 } },
+  };
+  game.begin(roomData, ["s0", "s1"]);
+  game.cur_order[1] = 0;
+  const roundOver = game.nextPlayer({ 5: 1 });
+  assert.equal(roundOver, true, "only one player left playing -> new round");
+  assert.equal(game.last, null);
+  assert.equal(game.cur_order[0], 1);
+  assert.equal(game.cur_order[1], 1);
+  assert.equal(game.cur_order.slice(2).every((v) => v === -1), true);
+});
+
+test("Game.begin places the Greater Dalmuti first regardless of seat numbering", () => {
+  const game = new Game();
+  const roomData = {
+    sockets: { s0: { seat: 3 }, s1: { seat: 5 } },
+  };
+  game.begin(roomData, ["s1", "s0"]);
+  assert.equal(game.cur_order_idx, 5);
+});

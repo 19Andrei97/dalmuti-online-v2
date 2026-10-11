@@ -1,1 +1,12 @@
 node_modules
+
+# Local database (holds password hashes) and env secrets
+data/
+*.db
+*.db-wal
+*.db-shm
+.env
+
+# Scratch/planning artifacts
+.agents_tmp/
+

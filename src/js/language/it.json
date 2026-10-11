@@ -47,5 +47,18 @@
     "placed": "ha giocato:",
     "taxs": ["Inviato:", "Ricevuto:"],
     "leaderboard": "Classifica",
-    "confirmPass": "Sei sicuro di voler passare?"
+    "confirmPass": "Sei sicuro di voler passare?",
+    "authRequired": "Accedi prima di entrare in una stanza.",
+    "badNickname": "Scegli un nome valido (1-20 caratteri).",
+    "badRoomName": "Scegli un nome stanza valido.",
+    "rateLimited": "Troppe richieste. Rallenta.",
+    "tooManyRooms": "La lobby è piena. Riprova più tardi.",
+    "mustPlay": "Devi giocare una carta quando il tavolo è vuoto.",
+    "noRevolution": "Nessuna rivoluzione dichiarata.",
+    "revolution": "ha dichiarato una rivoluzione! Le tasse sono annullate.",
+    "greaterRevolution": "ha dichiarato una GRANDE RIVOLUZIONE! Tutti cambiano posto.",
+    "revolutionPrompt": "Hai entrambi i Jolly. Dichiarare una rivoluzione per annullare le tasse?",
+    "revolutionPromptGreater": "Hai entrambi i Jolly come Grande Peone. Dichiarare una GRANDE RIVOLUZIONE per scambiare i posti?",
+    "taxPeonPrompt": "Scegli le tue carte migliori da dare al Dalmuti:",
+    "taxDalmutiPrompt": "Scegli le carte da restituire al Peone:"
 }
