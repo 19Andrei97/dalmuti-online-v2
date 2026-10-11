@@ -24,19 +24,35 @@ const ALLOWED_ORIGINS = (process.env.ALLOWED_ORIGINS || "")
   .split(",")
   .map((s) => s.trim())
   .filter(Boolean);
+// The account system is deprecated: on the free tier the filesystem is
+// ephemeral, so accounts cannot persist. Default is guest-only; set
+// AUTH_ENABLED=true (with persistent storage) to re-enable login.
+const AUTH_ENABLED = String(process.env.AUTH_ENABLED).toLowerCase() === "true";
 
 function createServer(opts = {}) {
   const app = express();
   const httpServer = http.createServer(app);
 
-  const userStore = opts.userStore || createUserStore(opts.dbPath);
-  const passport = configurePassport(userStore);
-  const sessionMiddleware = session({
-    secret: SESSION_SECRET,
-    resave: false,
-    saveUninitialized: false,
-    cookie: { httpOnly: true, sameSite: "lax", secure: NODE_ENV === "production" },
-  });
+  const authEnabled = opts.authEnabled != null ? opts.authEnabled : AUTH_ENABLED;
+  // Only build the database-backed store when auth is on; guest mode needs none.
+  const userStore = authEnabled ? opts.userStore || createUserStore(opts.dbPath) : null;
+  const passport = authEnabled ? configurePassport(userStore) : null;
+
+  // Render (and most PaaS) terminate TLS at a proxy and set X-Forwarded-For.
+  // Trusting the first hop lets secure cookies and rate limiting see the real
+  // client IP without triggering ERR_ERL_UNEXPECTED_X_FORWARDED_FOR.
+  app.set("trust proxy", 1);
+
+  // Sessions only matter for auth. Skipping them in guest mode avoids the
+  // in-memory store (no cookie, no MemoryStore warning, less memory on free).
+  const sessionMiddleware = authEnabled
+    ? session({
+        secret: SESSION_SECRET,
+        resave: false,
+        saveUninitialized: false,
+        cookie: { httpOnly: true, sameSite: "lax", secure: NODE_ENV === "production" },
+      })
+    : null;
 
   app.use(
     helmet({
@@ -64,25 +80,36 @@ function createServer(opts = {}) {
     })
   );
   app.use(express.json({ limit: "10kb" }));
-  app.use(sessionMiddleware);
-  app.use(passport.initialize());
-  app.use(passport.session());
+  if (sessionMiddleware) {
+    app.use(sessionMiddleware);
+    app.use(passport.initialize());
+    app.use(passport.session());
+  }
   app.use(express.static(path.join(__dirname, "src")));
 
   const authLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 30, standardHeaders: true });
+
+  // Render health check: cheap, unauthenticated, no session work.
+  app.get("/healthz", (req, res) => res.status(200).json({ status: "ok" }));
 
   app.get("/", (req, res) => res.sendFile(path.join(__dirname, "src", "index.html")));
   app.get("/help", (req, res) => res.sendFile(path.join(__dirname, "src", "help.html")));
   app.get("/login", (req, res) => res.sendFile(path.join(__dirname, "src", "login.html")));
 
+  // Auth routes stay in place but no-op while the account system is disabled.
+  const authDisabled = (req, res) =>
+    res.status(403).json({ error: "Authentication is disabled", authEnabled: false });
+
   app.get("/api/me", (req, res) => {
+    if (!authEnabled) return res.json({ authEnabled: false, username: null });
     if (req.isAuthenticated && req.isAuthenticated()) {
-      return res.json({ id: req.user.id, username: req.user.username });
+      return res.json({ authEnabled: true, id: req.user.id, username: req.user.username });
     }
-    return res.status(401).json({ error: "Not authenticated" });
+    return res.status(401).json({ authEnabled: true, error: "Not authenticated" });
   });
 
   app.post("/api/register", authLimiter, (req, res, next) => {
+    if (!authEnabled) return authDisabled(req, res);
     const { username, password } = req.body || {};
     const id = userStore.register(username, password);
     if (!id) return res.status(400).json({ error: "Invalid or taken username" });
@@ -93,9 +120,13 @@ function createServer(opts = {}) {
     });
   });
 
-  app.post("/api/login", authLimiter, loginHandler);
+  app.post("/api/login", authLimiter, (req, res, next) => {
+    if (!authEnabled) return authDisabled(req, res);
+    return loginHandler(req, res, next);
+  });
 
   app.post("/api/logout", (req, res) => {
+    if (!authEnabled) return res.json({ ok: true });
     req.logout(() => res.json({ ok: true }));
   });
 
@@ -126,9 +157,9 @@ function createServer(opts = {}) {
   });
 
   // Share the Express session with Socket.io so socket.userId is trustworthy.
-  io.engine.use(sessionMiddleware);
+  if (sessionMiddleware) io.engine.use(sessionMiddleware);
 
-  const manager = new RoomManager(io, { ...opts, userStore });
+  const manager = new RoomManager(io, { ...opts, userStore, requireAuth: authEnabled });
 
   io.on("connection", (socket) => {
     manager.attach(socket);
@@ -137,13 +168,13 @@ function createServer(opts = {}) {
   function close() {
     return new Promise((resolve) => {
       io.close(() => {
-        userStore.close();
+        if (userStore) userStore.close();
         resolve();
       });
     });
   }
 
-  return { app, httpServer, io, manager, userStore, close };
+  return { app, httpServer, io, manager, authEnabled, userStore, close };
 }
 
 if (require.main === module) {

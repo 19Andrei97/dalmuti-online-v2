@@ -3,12 +3,41 @@
 Repository-specific notes for the online *Great Dalmuti* game (Node + Express +
 Socket.io v4). Keep this file current when you learn something durable.
 
+## Deploy on Render (free)
+
+The service is deployed from this GitHub repo via the checked-in Blueprint.
+
+1. Render dashboard → **New +** → **Blueprint** → pick this repo → **Apply**.
+   `render.yaml` creates one free `web` service (`npm ci` build, `npm start`,
+   health check `/healthz`, auto-deploy on commit).
+2. Env vars are set by the Blueprint: `NODE_ENV=production`,
+   `AUTH_ENABLED=false`, and a generated `SESSION_SECRET`.
+3. No disk and no `DB_PATH`: the free tier filesystem is ephemeral, which is why
+   the account system is disabled (see below).
+
+Free-tier caveats: the service **spins down after ~15 min idle** (WebSockets drop,
+~1 min cold start on the next request), so a persistent account DB is not viable.
+Node is pinned to 22 via `.node-version` (Render's Node 24 default has no prebuilt
+`better-sqlite3@11.3.0` binary and would build from source).
+
+## Accounts: deprecated, kept for future re-enable
+
+The account system (Passport + `better-sqlite3`, `server/auth.js`,
+`server/user-store.js`, `/login`, `/api/*`) is **disabled by default** and runs
+guest-only: no database is created, `requireAuth` is off, and `/api/me` returns
+`{ authEnabled: false, username: null }`. Guests pick a nickname (kept in
+`localStorage`).
+
+To re-enable: set `AUTH_ENABLED=true` (and provide persistent storage / a mounted
+disk plus `DB_PATH`). The auth routes then behave exactly as before — login is
+required to create or join a room. `/healthz` is always reachable without auth.
+
 ## Commands
 
 - Install: `npm install`
 - Run: `npm start` (`node app.js`; honours `PORT`, `DB_PATH`, `SESSION_SECRET`,
-  `ALLOWED_ORIGINS`). Default port 8080.
-- Test: `npm test` → `node --test "test/**/*.test.js"`. Node 18+ required.
+  `ALLOWED_ORIGINS`, `AUTH_ENABLED`). Default port 8080.
+- Test: `npm test` → `node --test "test/**/*.test.js"`. Node 18–22 required.
   The glob form matters: Node 24 does not accept a bare directory.
 - Audit: `npm audit --omit=dev`.
 
