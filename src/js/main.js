@@ -588,7 +588,14 @@ $(function () {
       $inner.append($back, $carddiv);
       $("#field-section").append($inner);
     }
-    $(".fieldCards").fadeIn(300);
+    // Fade the cards in, then flip them to reveal the played rank. Without the
+    // `active` class the faces stay hidden and only the card backs are visible.
+    $(".fieldCards")
+      .fadeIn(300)
+      .promise()
+      .done(() => {
+        $("#field-section .flip-card-inner").addClass("active");
+      });
   }
 
   function showPoints(roomData) {
