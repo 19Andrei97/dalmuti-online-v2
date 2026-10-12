@@ -186,24 +186,14 @@
     margin-left: 0;
   }
 
-  /* Selection: lift the card and mark it, no per-card extra chrome. */
+  /* Selection: the pick is shown by a gold ring only. The card never lifts and
+   * its stacking never changes, so a selected card cannot cover a neighbour or
+   * swallow its click target. */
   .cards.selectable {
     cursor: pointer;
   }
-  .cards.selectable:hover {
-    transform: translateY(-6px);
-  }
-  /* A selected card lifts out of its row. Every card is positioned, so a later
-   * sibling would otherwise paint - and capture clicks - above an earlier one.
-   * Keep unselected cards above the selected one so a raised card never swallows
-   * a neighbour's click target. */
-  .cards.selectable:not(.selected) {
-    z-index: 1;
-  }
   .cards.selected {
-    transform: translateY(-14px);
-    box-shadow: 0 0 0 3px theme("colors.gold.DEFAULT"), 0 10px 18px rgba(0, 0, 0, 0.45);
-    z-index: 0;
+    box-shadow: 0 0 0 3px theme("colors.gold.DEFAULT");
   }
   /* A card that cannot be part of any legal play: dim it so the playable ranks
    * stand out. Only a hint - it stays selectable so a pick can be explained. */

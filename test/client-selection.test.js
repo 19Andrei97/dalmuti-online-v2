@@ -86,6 +86,32 @@ test("selection model: bulk pick is capped to the cards the field needs", () => 
   assert.equal(sel.selectedCountOf(1), 0);
 });
 
+test("selection model: bulk pick follows the number of cards on the table", () => {
+  // Two cards on the table -> a click picks two copies of the rank.
+  const two = new SelectionModel();
+  two.setHand([4, 4, 4, 4]);
+  two.setLimit(2);
+  two.setPlayable(new Set([4]));
+  assert.equal(two.toggleRank(4), true);
+  assert.equal(two.selectedCountOf(4), 2);
+
+  // Three cards on the table -> a click picks three copies.
+  const three = new SelectionModel();
+  three.setHand([4, 4, 4, 4]);
+  three.setLimit(3);
+  three.setPlayable(new Set([4]));
+  assert.equal(three.toggleRank(4), true);
+  assert.equal(three.selectedCountOf(4), 3);
+
+  // Fewer copies held than the table demands -> picks all you hold.
+  const few = new SelectionModel();
+  few.setHand([4, 4]);
+  few.setLimit(3);
+  few.setPlayable(new Set([4]));
+  assert.equal(few.toggleRank(4), true);
+  assert.equal(few.selectedCountOf(4), 2);
+});
+
 test("selection model: bulk pick selects every copy when leading", () => {
   const sel = new SelectionModel();
   sel.setHand([1, 1, 1, 1]);

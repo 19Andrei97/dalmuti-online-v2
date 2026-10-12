@@ -70,13 +70,19 @@ The client was migrated from hand-written CSS/JS to a small build toolchain:
 
 ## Client UX notes
 
-- Card selection (`src/ts/selection.ts`): a plain click/tap toggles *all* copies
-  of a rank (capped to the number of cards the field demands), Shift-click or a
+- Card selection (`src/ts/selection.ts`): a plain click/tap toggles a rank,
+  selecting as many copies as the table demands (`fieldCount`): with two cards on
+  the table one click picks two copies of that rank when you hold them, three
+  cards picks three, and while leading it picks every copy. Shift-click or a
   long-press (450 ms) toggles a single copy. Re-renders preserve the current
   selection by card value (see `handKey`/`taxKey` in `main.ts`) so the hand does
   not reset on every server update. `setPlayable` gates picks to the ranks that
   can legally answer the field (`playableRanks` in `client-rules.ts`); `null`
   means "no hint" (leading, or the tax prompt).
+- A selected card is marked by a gold ring only (`.cards.selected`). It must not
+  lift, animate or change z-index: the hand overlaps its cards, so a raised or
+  re-stacked card would cover a neighbour and swallow its click target. Border
+  only keeps every card's hit area intact.
 - Playability hint: `paintSelection` dims hand cards that cannot take part in a
   legal play (`.cards.unplayable`, 75% opacity). It is a hint only — the cards
   stay selectable so an invalid pick can still be explained by the server.
