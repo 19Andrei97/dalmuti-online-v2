@@ -88,12 +88,14 @@ The client was migrated from hand-written CSS/JS to a small build toolchain:
   stay selectable so an invalid pick can still be explained by the server.
   `test/client-selection.test.js` cross-checks `playableRanks` against the
   engine's `checkRule` for every field, so the hint can never drift from the rule.
-- Selected cards must not steal their neighbours' clicks. Every `.cards` is
-  `position: relative`, so a lifted `.selected` card (z-index 5) paints *above*
-  later siblings and swallows their pointer target. Keep unselected cards above
-  the selected one instead: `.cards.selectable:not(.selected) { z-index: 1 }`
-  and `.cards.selected { z-index: 0 }`. Verify by probing
-  `document.elementFromPoint` on a neighbour's exposed slice.
+- The pass button only asks for confirmation when a card could still be played:
+  `hasLegalPlay(hand, last)` (in `client-rules.ts`, also cross-checked against
+  `checkRule`) is false when no set or Joker pair can answer the field, and then
+  the pass fires straight away.
+- Create room: Enter in the name field submits (the dialog form uses
+  `method="dialog"`, so `keydown` calls `preventDefault` to avoid closing before
+  the emit). An empty name is allowed and a friendly one is generated
+  (`generateRoomName`, e.g. "Golden Gardens") instead of rejecting the player.
 - Responsive: cards are sized with the `--card-w`/`--card-h` CSS variables
   (smaller under 640px), seats collapse to a 4-column grid, and the chat/score
   sidebar becomes a slide-up bottom sheet on screens narrower than `lg`.

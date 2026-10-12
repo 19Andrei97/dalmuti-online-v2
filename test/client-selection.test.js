@@ -31,7 +31,7 @@ esbuild.buildSync({
 });
 
 const client = await import(pathToFileURL(outfile).href);
-const { playableRanks, classifyMove, fieldCount, SelectionModel } = client;
+const { playableRanks, classifyMove, fieldCount, hasLegalPlay, SelectionModel } = client;
 
 const JOKER = 13;
 
@@ -155,6 +155,68 @@ test("classifyMove mirrors the server's lead/follow rules", () => {
   assert.equal(classifyMove({ num: 5, count: 2, by: "x" }, { 4: 2 }, false), "play");
   assert.equal(classifyMove({ num: 5, count: 2, by: "x" }, { 6: 2 }, false), "invalid");
   assert.equal(classifyMove({ num: 5, count: 2, by: "x" }, { 4: 1 }, false), "invalid"); // wrong count
+});
+
+test("hasLegalPlay: leading is always playable", () => {
+  assert.equal(hasLegalPlay([5, 5], null), true);
+  assert.equal(hasLegalPlay([JOKER], { num: 0, count: 0, by: "" }), true);
+});
+
+test("hasLegalPlay: a lower set of the right size answers the field", () => {
+  const last = { num: 6, count: 2, by: "x" };
+  assert.equal(hasLegalPlay([4, 4], last), true, "two 4s beat two 6s");
+  assert.equal(hasLegalPlay([4, 5], last), false, "mixed ranks cannot follow");
+  assert.equal(hasLegalPlay([7, 7], last), false, "a higher rank cannot follow");
+  assert.equal(hasLegalPlay([6, 6], last), false, "the field's own rank cannot follow");
+});
+
+test("hasLegalPlay: the Joker answers only a two-card field", () => {
+  // Only one low card, so a plain set cannot answer; the Joker pair can.
+  assert.equal(hasLegalPlay([JOKER, 3], { num: 6, count: 2, by: "x" }), true);
+  // A Joker pair is two cards: it can never match a one- or three-card field.
+  assert.equal(hasLegalPlay([JOKER, 9], { num: 6, count: 1, by: "x" }), false);
+  assert.equal(hasLegalPlay([JOKER, 3], { num: 6, count: 3, by: "x" }), false);
+  // The rank paired with the Joker must itself be lower than the field.
+  assert.equal(hasLegalPlay([JOKER, 9], { num: 6, count: 2, by: "x" }), false);
+});
+
+test("hasLegalPlay agrees with checkRule: playable iff some legal play exists", async () => {
+  const engine = await import(
+    pathToFileURL(path.join(root, "server", "game-engine.js")).href
+  );
+  const { checkRule } = engine;
+  const hands = [
+    [1, 2, 3, 4, 5, 6, 7, 8],
+    [5, 5, 5, 9, 9],
+    [JOKER, 2, 12, 12],
+    [7, 7, 7, 7],
+  ];
+
+  for (let num = 1; num <= JOKER; num++) {
+    for (let count = 1; count <= 4; count++) {
+      const last = { num, count, by: "x" };
+      for (const hand of hands) {
+        const counts = new Map();
+        for (const card of hand) counts.set(card, (counts.get(card) ?? 0) + 1);
+        // Only ranks the hand actually holds enough copies of can answer.
+        let engineLegal = [...counts].some(
+          ([r, have]) => r !== JOKER && have >= count && checkRule(last, { [r]: count })
+        );
+        if (!engineLegal && count === 2) {
+          engineLegal = [...counts].some(
+            ([r, have]) =>
+              r !== JOKER && have >= 1 && (counts.get(JOKER) ?? 0) >= 1 &&
+              checkRule(last, { [JOKER]: 1, [r]: 1 })
+          );
+        }
+        assert.equal(
+          hasLegalPlay(hand, last),
+          engineLegal,
+          `field ${count}x${num} hand [${hand}]`
+        );
+      }
+    }
+  }
 });
 
 test("fieldCount reports the cards a follow must match", () => {

@@ -13,7 +13,7 @@ import {
 import { loadLanguage, resolveMessage, setLanguage, currentLang, type LangCode, type Language } from "./i18n";
 import { connect, type TypedSocket } from "./socket";
 import { SelectionModel } from "./selection";
-import { classifyMove, fieldCount, playableRanks } from "./client-rules";
+import { classifyMove, fieldCount, hasLegalPlay, playableRanks } from "./client-rules";
 import { GameState, JOKER, type AuthInfo, type LobbyView, type RoomData, type Role } from "./types";
 
 const CARD_CLASS: readonly string[] = [
@@ -275,19 +275,15 @@ function wireLobby(session: Session): void {
   maybeById("dlg-join-close")?.addEventListener("click", () => closeDialog(byId("dlg-join")));
   maybeById("dlg-nickname-close")?.addEventListener("click", () => closeDialog(byId("dlg-nickname")));
 
-  maybeById("create-room-confirm")?.addEventListener("click", () => {
-    const name = maybeById<HTMLInputElement>("new-room-name")?.value.trim() ?? "";
-    const hide = maybeById<HTMLInputElement>("hide-room")?.checked ?? false;
-    if (!name) {
-      toast("Please enter a room name.");
-      return;
+  maybeById("create-room-confirm")?.addEventListener("click", () => submitCreateRoom(session));
+
+  // Enter in the name field submits, and an empty name is fine: we generate one.
+  const nameField = maybeById<HTMLInputElement>("new-room-name");
+  nameField?.addEventListener("keydown", (ev) => {
+    if (ev.key === "Enter") {
+      ev.preventDefault();
+      submitCreateRoom(session);
     }
-    clearChat();
-    showLoading(session);
-    session.socket.emit("create game room", name, hide);
-    const field = maybeById<HTMLInputElement>("new-room-name");
-    if (field) field.value = "";
-    closeDialog(byId("dlg-create"));
   });
 
   maybeById("join-room-confirm")?.addEventListener("click", () => {
@@ -325,6 +321,34 @@ function wireLobby(session: Session): void {
 function clearChat(): void {
   const box = maybeById("chat-messages");
   if (box) clear(box);
+}
+
+/* A friendly default when the player creates a room without naming it. */
+const NAME_WORDS = [
+  "Royal", "Golden", "Merry", "Brave", "Noble", "Quiet", "Clever", "Jolly",
+  "Lucky", "Grand", "Rusty", "Velvet",
+];
+const NAME_NOUNS = [
+  "Tavern", "Court", "Keep", "Guild", "Hall", "Castle", "Market", "Manor",
+  "Chapel", "Bridge", "Mill", "Gardens",
+];
+
+function generateRoomName(): string {
+  const pick = <T>(list: readonly T[]): T => list[Math.floor(Math.random() * list.length)]!;
+  return `${pick(NAME_WORDS)} ${pick(NAME_NOUNS)}`;
+}
+
+/** Create a room: Enter or the button both land here. An empty name is fine. */
+function submitCreateRoom(session: Session): void {
+  const field = maybeById<HTMLInputElement>("new-room-name");
+  const name = field?.value.trim() || generateRoomName();
+  const hide = maybeById<HTMLInputElement>("hide-room")?.checked ?? false;
+
+  clearChat();
+  showLoading(session);
+  session.socket.emit("create game room", name, hide);
+  if (field) field.value = "";
+  closeDialog(byId("dlg-create"));
 }
 
 function showLoading(session: Session): void {
@@ -379,7 +403,10 @@ function onPlay(session: Session): void {
     return;
   }
   if (kind === "pass") {
-    if (window.confirm(session.lang.confirmPass)) {
+    // When no card in hand can answer the field, passing is the only action -
+    // don't make the player confirm it.
+    const forced = !hasLegalPlay(rd.hand, rd.last ?? null);
+    if (forced || window.confirm(session.lang.confirmPass)) {
       session.socket.emit("play", {});
       resetHandSelection(session);
     }

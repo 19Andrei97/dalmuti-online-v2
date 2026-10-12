@@ -62,6 +62,30 @@ export function fieldCount(last: LastPlay | null): number {
 }
 
 /**
+ * True when the player holds at least one legal answer to the field. Mirrors
+ * `followsField`/`checkRule`: a set of `count` copies of a lower rank, or the
+ * `{Joker, lower rank}` pair. Used to skip the pass confirmation when passing is
+ * the player's only action. Leading is always "playable" (you must play).
+ */
+export function hasLegalPlay(hand: readonly number[], last: LastPlay | null): boolean {
+  if (!last || !last.num) return true;
+
+  const need = last.count;
+  const counts = new Map<number, number>();
+  for (const card of hand) counts.set(card, (counts.get(card) ?? 0) + 1);
+
+  for (const [rank, have] of counts) {
+    if (rank !== JOKER && rank < last.num && have >= need) return true;
+  }
+  if (need === 2 && (counts.get(JOKER) ?? 0) >= 1) {
+    for (const [rank, have] of counts) {
+      if (rank !== JOKER && rank < last.num && have >= 1) return true;
+    }
+  }
+  return false;
+}
+
+/**
  * The ranks that could ever take part in a legal play for the given field, or
  * `null` when there is no hint to give (the table is empty and almost anything
  * may be led). Used only to dim the hand; the server stays the authority.
