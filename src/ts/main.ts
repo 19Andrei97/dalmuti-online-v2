@@ -101,6 +101,7 @@ function applyStaticTranslations(lang: Language): void {
     "new-room-name-label": lang.newRoomName,
     "join-room-label": lang.newRoomName,
     "hide-label": lang.hide,
+    "no-tax-label": lang.noTaxFirst,
     "create-room-confirm": lang.btnCreate,
     "nickname-title": lang.titleNickModal,
     "nickname-label": lang.setNickname,
@@ -338,10 +339,11 @@ function submitCreateRoom(session: Session): void {
   const field = maybeById<HTMLInputElement>("new-room-name");
   const name = field?.value.trim() || generateRoomName();
   const hide = maybeById<HTMLInputElement>("hide-room")?.checked ?? false;
+  const noTax = maybeById<HTMLInputElement>("no-tax-room")?.checked ?? false;
 
   clearChat();
   showLoading(session);
-  session.socket.emit("create game room", name, hide);
+  session.socket.emit("create game room", name, hide, noTax);
   if (field) field.value = "";
   closeDialog(byId("dlg-create"));
 }
@@ -452,10 +454,9 @@ function wireServerEvents(session: Session): void {
     div.style.color = color;
     appendChat(div);
   });
-  session.socket.on("chat announce taxs", (key, color, sent, received) => {
-    const resolved = resolveMessage(session.lang, key);
+  session.socket.on("chat announce taxs", (_key, color, sent, received) => {
     const div = el("div", { class: "font-bold" });
-    div.appendChild(document.createTextNode(`${resolved} ${session.lang.taxs[0]} ${sent}`));
+    div.appendChild(document.createTextNode(`${session.lang.taxs[0]} ${sent}`));
     div.appendChild(el("br"));
     div.appendChild(document.createTextNode(`${session.lang.taxs[1]} ${received}`));
     div.style.color = color;

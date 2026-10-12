@@ -53,7 +53,14 @@ function enumeratePlays(hand, last) {
     }
   }
 
-  return candidates.filter((sel) => engine.checkRule(last, sel));
+  const plays = candidates.filter((sel) => engine.checkRule(last, sel));
+  // A lone Joker (or a Joker pair) is a legal but weak play. Bots only fall back
+  // to it when nothing better exists, so they never throw a wildcard away
+  // needlessly. Joker-with-a-rank plays are kept: those are the useful wilds.
+  const nonJokerOnly = plays.filter(
+    (sel) => !Object.keys(sel).every((card) => Number(card) === engine.JOKER)
+  );
+  return nonJokerOnly.length ? nonJokerOnly : plays;
 }
 
 function chooseRandom(plays, rng) {

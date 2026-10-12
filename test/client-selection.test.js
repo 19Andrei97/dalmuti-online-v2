@@ -150,7 +150,7 @@ test("classifyMove mirrors the server's lead/follow rules", () => {
   assert.equal(classifyMove(null, {}, true), "invalid"); // empty lead
   assert.equal(classifyMove(null, {}, false), "pass"); // empty follow passes
   assert.equal(classifyMove(null, { 1: 2 }, true), "play"); // lead a set
-  assert.equal(classifyMove(null, { [JOKER]: 1 }, true), "invalid"); // lone Joker
+  assert.equal(classifyMove(null, { [JOKER]: 1 }, true), "play"); // lone Joker led as 13
   assert.equal(classifyMove(null, { [JOKER]: 1, 2: 1 }, true), "play"); // Joker + rank
   assert.equal(classifyMove({ num: 5, count: 2, by: "x" }, { 4: 2 }, false), "play");
   assert.equal(classifyMove({ num: 5, count: 2, by: "x" }, { 6: 2 }, false), "invalid");
@@ -178,6 +178,8 @@ test("hasLegalPlay: the Joker answers only a two-card field", () => {
   assert.equal(hasLegalPlay([JOKER, 3], { num: 6, count: 3, by: "x" }), false);
   // The rank paired with the Joker must itself be lower than the field.
   assert.equal(hasLegalPlay([JOKER, 9], { num: 6, count: 2, by: "x" }), false);
+  // A lone Joker is a 13, so it can never answer a one-card field.
+  assert.equal(hasLegalPlay([JOKER], { num: 12, count: 1, by: "x" }), false);
 });
 
 test("hasLegalPlay agrees with checkRule: playable iff some legal play exists", async () => {

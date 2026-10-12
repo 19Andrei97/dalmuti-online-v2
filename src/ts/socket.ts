@@ -32,7 +32,7 @@ export interface ClientToServerEvents {
   init: () => void;
   reconnect: (token: string) => void;
   "set new nickname": (nickname: string, roomId: string) => void;
-  "create game room": (name: string, hide: boolean) => void;
+  "create game room": (name: string, hide: boolean, noTax: boolean) => void;
   "join game room": (name: string) => void;
   "leave room": () => void;
   "chat message": (msg: string) => void;

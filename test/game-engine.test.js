@@ -62,9 +62,10 @@ test("checkValidity only allows cards that are actually held", () => {
 
 test("checkRule: leading rules", () => {
   assert.equal(checkRule(null, { 5: 1 }), true);
-  assert.equal(checkRule(null, { 13: 1 }), false);
+  assert.equal(checkRule(null, { 13: 1 }), true, "a lone Joker is led as a 13");
   assert.equal(checkRule(null, { 5: 1, 6: 1 }), false);
   assert.equal(checkRule(null, { 5: 1, 13: 1 }), true);
+  assert.equal(checkRule(null, { 13: 2 }), true, "a Joker pair is led as a pair of 13s");
   assert.equal(checkRule(null, { 5: 1, 6: 1, 7: 1 }), false);
 });
 
@@ -95,11 +96,10 @@ test("checkRule: Jokers are wild and complete a set of one rank", () => {
   assert.equal(checkRule(null, { 9: 1, 8: 1 }), false, "non-Joker ranks must match");
   assert.equal(checkRule({ num: 12, count: 4 }, { 9: 3, 13: 1 }), true);
   assert.equal(checkRule({ num: 12, count: 3 }, { 9: 1, 13: 2 }), true);
-  // Jokers alone are the worst cards (a 13): illegal to lead, and they cannot
-  // match any field because they never beat a real rank.
-  assert.equal(checkRule(null, { 13: 1 }), false);
-  assert.equal(checkRule(null, { 13: 2 }), false);
-  assert.equal(checkRule({ num: 12, count: 2 }, { 13: 2 }), false);
+  // Jokers alone are the worst cards (a 13): they can be led, but as a 13 they
+  // never beat any field. A pair of Jokers similarly cannot follow a pair.
+  assert.equal(checkRule({ num: 12, count: 1 }, { 13: 1 }), false, "a lone Joker never follows");
+  assert.equal(checkRule({ num: 12, count: 2 }, { 13: 2 }), false, "a Joker pair cannot follow");
 });
 
 test("applyPlay removes exactly the selected cards and keeps a sorted numeric hand", () => {
@@ -310,6 +310,22 @@ test("a play records its exact cards so a wild Joker stays a Joker", () => {
   assert.equal(game.last.count, 2);
   assert.deepEqual(game.last.cards, [5, 13], "the Joker is kept as 13, not 5");
   assert.deepEqual(game.shown.cards, [5, 13], "the display copy keeps the Joker too");
+});
+
+test("a lone-Joker lead records rank 13 so the field can be followed", () => {
+  const game = new Game();
+  const roomData = { sockets: { s0: { seat: 0 }, s1: { seat: 1 } } };
+  game.begin(roomData, ["s0", "s1"]);
+  // A player holding only Jokers must lead one; it is a rank-13 set.
+  game.nextPlayer({ 13: 1 }, "s0", roomData);
+  assert.equal(game.last.num, 13, "the lone Joker is a rank-13 field, not empty");
+  assert.equal(game.last.count, 1);
+  assert.deepEqual(game.last.cards, [13]);
+  // A 13 is the weakest rank, so any real card beats it; the field is a live
+  // (non-empty) field that the next player can answer or pass on.
+  assert.equal(checkRule(game.last, { 12: 1 }), true);
+  assert.equal(checkRule(game.last, { 11: 1 }), true);
+  assert.equal(checkRule(game.last, { 13: 1 }), false, "a Joker cannot beat a Joker");
 });
 
 test("shown marks a game-ending finisher with handCount 0", () => {

@@ -271,3 +271,36 @@ test("the next hand re-seats players by the previous finishing order", () => {
   assert.equal(room.game.roles.b, ROLE.GREATER_PEON);
   assert.equal(room.game.state, game_state.TAXATION, "start awaits taxes");
 });
+
+test("the first-round 'no taxes' house rule skips taxation and blanks the roles", () => {
+  const { io, manager } = makeManager();
+  const order = ["a", "b", "c", "d", "e"]; // a=GD, b=LD, c=merchant, d=LP, e=GP
+  const hands = { a: [1, 2], b: [3, 4], c: [5, 6], d: [7, 8], e: [9, 10] };
+  const room = setupRoom(manager, order, hands);
+  room.noTaxFirstRound = true;
+  room.game.round = -1; // startGame advances this to 0 (the first hand)
+  manager.startGame(room);
+
+  assert.equal(room.game.state, game_state.PLAYING, "play begins without taxes");
+  assert.equal(room.phase, null, "no tax phase was created");
+  assert.deepEqual(room.game.roles, {}, "roles blanked so seats show plain citizens");
+  assert.ok(
+    io.events.some((e) => e.event === "chat announce" && e.args[0] === "language.noTaxFirst"),
+    "the no-tax rule is announced"
+  );
+});
+
+test("without the house rule the first hand still taxes", () => {
+  const { manager } = makeManager();
+  const order = ["a", "b", "c", "d", "e"];
+  const hands = { a: [1, 2], b: [3, 4], c: [5, 6], d: [7, 8], e: [9, 10] };
+  const room = setupRoom(manager, order, hands);
+  room.game.round = -1;
+  manager.startGame(room);
+
+  assert.equal(room.game.state, game_state.TAXATION, "default keeps the official tax");
+  assert.ok(
+    Object.values(room.game.roles).includes(ROLE.GREATER_DALMUTI),
+    "a Greater Dalmuti is still seated"
+  );
+});

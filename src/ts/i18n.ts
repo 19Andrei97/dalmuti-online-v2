@@ -10,6 +10,7 @@ export interface Language {
   join: string;
   newRoomName: string;
   hide: string;
+  noTaxFirst: string;
   btnCreate: string;
   titleNickModal: string;
   setNickname: string;

@@ -114,12 +114,12 @@ class RoomManager {
     const selection = bot.choosePlay(me.hand, room.game.last, me.difficulty, this.rng);
 
     if (!selection) {
-      if (room.game.last) {
+      // A leader must play when they can; only an empty hand may pass.
+      if (room.game.last || me.hand.length === 0) {
         room.game.cur_order[me.seat] = 0;
         room.game.nextPlayer({}, null, room);
         this.broadcastRoom(room);
       }
-      // Leading is always possible, so choosePlay returns a selection here.
     } else {
       this.applyPlay(room, sid, selection);
     }
@@ -267,7 +267,7 @@ class RoomManager {
       socket.emit("update sender", this.senderView(socket));
     });
 
-    socket.on("create game room", (rawName, hide) => {
+    socket.on("create game room", (rawName, hide, noTax) => {
       if (!this.ensureAuth(socket)) return;
       if (!this.allowRoom(socket.id)) return this.alert(socket, "language.rateLimited");
       if (this.roomCount() >= MAX_ROOMS) return this.alert(socket, "language.tooManyRooms");
@@ -275,7 +275,7 @@ class RoomManager {
       if (!name) return this.alert(socket, "language.badRoomName");
       this.roomNumber++;
       const idRoom = `${this.roomNumber}-${name}`;
-      this.createRoom(idRoom, !!hide, socket.id);
+      this.createRoom(idRoom, !!hide, socket.id, !!noTax);
       this.joinRoom(socket, idRoom);
       socket.emit("connectUrl", `/room/${encodeURIComponent(idRoom)}`);
     });
@@ -331,7 +331,7 @@ class RoomManager {
 
   // ---- rooms --------------------------------------------------------------
 
-  createRoom(name, hide, hostSid = null) {
+  createRoom(name, hide, hostSid = null, noTax = false) {
     const room = {
       name,
       hide,
@@ -342,6 +342,9 @@ class RoomManager {
       finishedOrder: [],
       phase: null,
       hostSid,
+      // House rule: skip the very first taxation, so the first hand has no
+      // Dalmuti/Peon seats (blank heraldry) and play starts immediately.
+      noTaxFirstRound: !!noTax,
       createdAt: Date.now(),
     };
     (hide ? this.rooms.hide : this.rooms.open)[name] = room;
@@ -653,6 +656,12 @@ class RoomManager {
     );
     if (candidates.length) {
       this.beginRevolutionPhase(room, candidates);
+    } else if (room.noTaxFirstRound && room.game.round === 0) {
+      // First-round house rule: no taxes and no roles yet — every seat stays a
+      // plain citizen for this hand. Play begins straight away.
+      room.game.roles = {};
+      this.io.to(room.name).emit("chat announce", "language.noTaxFirst", "blue");
+      this.beginPlaying(room);
     } else {
       this.beginTaxPhase(room);
     }

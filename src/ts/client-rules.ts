@@ -20,7 +20,6 @@ export function canLead(selection: CardSelection): boolean {
   if (ranks.length === 0) return false;
   if (ranks.length > 2) return false;
   if (ranks.length === 2 && !selection[JOKER]) return false;
-  if (ranks.length === 1 && ranks[0] === JOKER) return false;
   return true;
 }
 
@@ -33,12 +32,8 @@ export function followsField(last: LastPlay, selection: CardSelection): boolean 
   if (selectionTotal(selection) !== last.count) return false;
 
   for (const rank of ranks) {
-    if (ranks.length === 1) {
-      if (rank === JOKER) return false;
-      if (last.num - rank <= 0) return false;
-    } else if (rank !== JOKER) {
-      if (last.num - rank <= 0) return false;
-    }
+    if (ranks.length === 2 && rank === JOKER) continue;
+    if (last.num - rank <= 0) return false;
   }
   return true;
 }

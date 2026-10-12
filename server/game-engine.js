@@ -101,8 +101,9 @@ function checkRule(last, selection) {
   if (cards.length === 2 && !selection[JOKER]) return false;
 
   if (!last) {
-    // Leading: a lone Joker is not a legal lead.
-    if (cards.length === 1 && cards[0] === JOKER) return false;
+    // Leading: a set is one or more cards of the same rank, so a lone Joker is a
+    // rank-13 set (and one or two Jokers are a legal lead). A Joker mixed with a
+    // real rank stands in for that rank, also a legal lead.
     return true;
   }
 
@@ -110,7 +111,7 @@ function checkRule(last, selection) {
 
   for (const card of cards) {
     if (cards.length === 1) {
-      if (card === JOKER) return false;
+      // A lone Joker is a 13 — the worst card — so it never beats anything.
       if (last.num - card <= 0) return false;
     } else if (card !== JOKER) {
       if (last.num - card <= 0) return false;
@@ -362,6 +363,9 @@ class Game {
         if (Number(card) !== JOKER) this.last.num = Number(card);
         this.last.count += val;
       }
+      // A play of only Jokers is a set of 13s (the lone-Joker lead or a Joker
+      // pair); give it rank 13 so following and rendering treat it as a field.
+      if (this.last.num === null) this.last.num = JOKER;
       // Keep the exact cards played (Jokers included) so the table can show a
       // Joker as a Joker rather than the rank it stood in for.
       this.last.cards = cardsFromSelection(selected_card);

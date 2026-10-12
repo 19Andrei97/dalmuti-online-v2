@@ -136,10 +136,21 @@ if they go out).
 ## Rules model
 
 - Cards are integers `1..12` (rank = count in deck) plus Joker = `13`; 80 cards.
+- A lone Joker is a rank-13 singleton: it is the *weakest* card, and it may be
+  led (a player holding only Jokers must lead one). As a 13 it never beats any
+  field. Two Jokers are a rank-13 pair (also the weakest, so it can never follow
+  a pair), and a Joker beside a real rank stands in for that rank. Bots only
+  play a Joker-only set when nothing else can answer, so they keep wilds.
 - Dealing: official distribution — higher-ranked players get the extra cards
   (11/11/11/11/12/12/12 for 7 players). No cards discarded.
 - Start of each hand: re-seat by previous finishing order (`room.leaderBoard`),
   or a card draw (`drawForOrder`) for the first hand. Game enters `TAXATION`.
+- House rule "First round no taxes" (create-room checkbox): a room created with
+  `noTax = true` stores `room.noTaxFirstRound`. On the first hand only
+  (`room.game.round === 0`) `startGame` skips the tax phase, blanks `game.roles`
+  so every seat renders a plain citizen (no Dalmuti/Peon heraldry), announces
+  `language.noTaxFirst` and goes straight to `beginPlaying`. Later hands tax
+  normally.
 - Revolution: a player dealt both Jokers may declare it (Greater Peon ⇒ Greater
   Revolution reverses the whole order); it cancels taxes and starts play.
 - Taxes are one-sided: the Peon's tribute is automatic (the lowest non-Joker
