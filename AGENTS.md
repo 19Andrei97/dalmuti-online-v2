@@ -71,9 +71,23 @@ The client was migrated from hand-written CSS/JS to a small build toolchain:
 ## Client UX notes
 
 - Card selection (`src/ts/selection.ts`): a plain click/tap toggles *all* copies
-  of a rank; Shift-click or a long-press (450 ms) toggles a single copy. Re-renders
-  preserve the current selection by card value (see `handKey`/`taxKey` in
-  `main.ts`) so the hand does not reset on every server update.
+  of a rank (capped to the number of cards the field demands), Shift-click or a
+  long-press (450 ms) toggles a single copy. Re-renders preserve the current
+  selection by card value (see `handKey`/`taxKey` in `main.ts`) so the hand does
+  not reset on every server update. `setPlayable` gates picks to the ranks that
+  can legally answer the field (`playableRanks` in `client-rules.ts`); `null`
+  means "no hint" (leading, or the tax prompt).
+- Playability hint: `paintSelection` dims hand cards that cannot take part in a
+  legal play (`.cards.unplayable`, 75% opacity). It is a hint only — the cards
+  stay selectable so an invalid pick can still be explained by the server.
+  `test/client-selection.test.js` cross-checks `playableRanks` against the
+  engine's `checkRule` for every field, so the hint can never drift from the rule.
+- Selected cards must not steal their neighbours' clicks. Every `.cards` is
+  `position: relative`, so a lifted `.selected` card (z-index 5) paints *above*
+  later siblings and swallows their pointer target. Keep unselected cards above
+  the selected one instead: `.cards.selectable:not(.selected) { z-index: 1 }`
+  and `.cards.selected { z-index: 0 }`. Verify by probing
+  `document.elementFromPoint` on a neighbour's exposed slice.
 - Responsive: cards are sized with the `--card-w`/`--card-h` CSS variables
   (smaller under 640px), seats collapse to a 4-column grid, and the chat/score
   sidebar becomes a slide-up bottom sheet on screens narrower than `lg`.

@@ -60,3 +60,25 @@ export function classifyMove(
 export function fieldCount(last: LastPlay | null): number {
   return last && last.num ? last.count : 0;
 }
+
+/**
+ * The ranks that could ever take part in a legal play for the given field, or
+ * `null` when there is no hint to give (the table is empty and almost anything
+ * may be led). Used only to dim the hand; the server stays the authority.
+ *
+ * A legal follow is either one non-Joker card, or the pair {Joker, lower rank},
+ * and its total must equal the field's count. So every rank below the field's
+ * rank can answer; the Joker can only answer a *two*-card field (a Joker pair is
+ * two cards and can never match a one- or three-card field). The field count does
+ * not otherwise restrict which ranks are playable.
+ */
+export function playableRanks(last: LastPlay | null, tableEmpty: boolean): Set<number> | null {
+  if (tableEmpty || !last) return null;
+
+  const playable = new Set<number>();
+  for (let rank = 1; rank < JOKER; rank++) {
+    if (last.num - rank > 0) playable.add(rank);
+  }
+  if (last.count === 2 && last.num > 1) playable.add(JOKER);
+  return playable;
+}

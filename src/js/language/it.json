@@ -81,5 +81,5 @@
     "botAdd": "Aggiungi",
     "fullscreen": "Schermo intero",
     "revolutionReady": "Puoi dichiarare una rivoluzione.",
-    "selectHint": "Tocca una carta per prenderle tutte di quel valore. Shift-tocca (o tieni premuto) per una copia."
+    "selectHint": "Tocca una carta per sceglierla (tutte le copie di un valore, fino alle carte necessarie). Shift-tocca o tieni premuto per una copia. Le carte attenuate non si possono giocare."
 }

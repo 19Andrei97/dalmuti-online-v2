@@ -17,6 +17,7 @@ export class SelectionModel {
   private held = new Map<number, number>();
   private sel = new Map<number, number>();
   private limit = 0;
+  private playable: Set<number> | null = null;
 
   setHand(hand: readonly number[]): void {
     this.held.clear();
@@ -28,6 +29,18 @@ export class SelectionModel {
       else if (count > have) this.sel.set(value, have);
     }
     this.clampToLimit();
+  }
+
+  /**
+   * Ranks that may take part in a play (a rule hint), or `null` for "no hint"
+   * (e.g. leading, or the tax prompt where every card is selectable).
+   */
+  setPlayable(ranks: Set<number> | null): void {
+    this.playable = ranks;
+  }
+
+  isPlayable(value: number): boolean {
+    return this.playable === null || this.playable.has(value);
   }
 
   /** Required number of cards, or 0 for "no requirement" (leading / open pick). */
@@ -96,8 +109,19 @@ export class SelectionModel {
     return this.limit > 0 ? this.limit - this.total() : Infinity;
   }
 
-  /** Select all held copies of a rank, or clear it when some are already picked. */
+  /**
+   * Cap on how many copies of a rank can be picked in one go. When the field
+   * demands `limit` cards, a rank's bulk pick is trimmed to the copies actually
+   * needed (and never more than you hold).
+   */
+  private maxSelectable(value: number): number {
+    const have = this.held.get(value) ?? 0;
+    return this.limit > 0 ? Math.min(have, this.limit) : have;
+  }
+
+  /** Select a rank's copies (capped to the field count), or clear it if already picked. */
   toggleRank(value: number): boolean {
+    if (!this.isPlayable(value)) return false;
     const have = this.held.get(value) ?? 0;
     if (have === 0) return false;
 
@@ -107,7 +131,7 @@ export class SelectionModel {
     }
 
     const room = this.remaining();
-    const add = Math.min(have, room);
+    const add = Math.min(this.maxSelectable(value), room);
     if (add <= 0) return false;
     this.sel.set(value, add);
     return true;
@@ -115,11 +139,12 @@ export class SelectionModel {
 
   /** Add or remove a single copy of a rank. */
   toggleOne(value: number): boolean {
+    if (!this.isPlayable(value)) return false;
     const have = this.held.get(value) ?? 0;
     if (have === 0) return false;
     const cur = this.sel.get(value) ?? 0;
 
-    if (cur < have && this.remaining() > 0) {
+    if (cur < this.maxSelectable(value) && this.remaining() > 0) {
       this.sel.set(value, cur + 1);
       return true;
     }

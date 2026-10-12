@@ -13,7 +13,7 @@ import {
 import { loadLanguage, resolveMessage, setLanguage, currentLang, type LangCode, type Language } from "./i18n";
 import { connect, type TypedSocket } from "./socket";
 import { SelectionModel } from "./selection";
-import { classifyMove, fieldCount } from "./client-rules";
+import { classifyMove, fieldCount, playableRanks } from "./client-rules";
 import { GameState, JOKER, type AuthInfo, type LobbyView, type RoomData, type Role } from "./types";
 
 const CARD_CLASS: readonly string[] = [
@@ -690,6 +690,8 @@ function renderHand(session: Session, data: RoomData): void {
 
   session.selection.setHand(data.hand);
   session.selection.setLimit(fieldCount(data.last));
+  const tableEmpty = !(data.last && data.last.num);
+  session.selection.setPlayable(playableRanks(data.last, tableEmpty));
 
   // Rebuild only when the multiset of cards changes; a plain room refresh keeps
   // the DOM (and the player's selection) intact.
@@ -741,9 +743,11 @@ function collectHandNodes(): Map<number, HTMLElement[]> {
 function paintSelection(session: Session, nodes: Map<number, HTMLElement[]>): void {
   for (const [value, bucket] of nodes) {
     const count = session.selection.selectedCountOf(value);
+    const playable = session.selection.isPlayable(value);
     bucket.forEach((node, index) => {
       const on = index < count;
       node.classList.toggle("selected", on);
+      node.classList.toggle("unplayable", !playable);
       node.setAttribute("aria-pressed", on ? "true" : "false");
     });
   }
