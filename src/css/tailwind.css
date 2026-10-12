@@ -51,10 +51,19 @@
 
   body {
     @apply bg-parchment text-ink font-body;
-    /* Subtle parchment grain via layered gradients. */
+    /* Layered medieval atmosphere: a warm parchment field, faint damask
+     * heraldry, gold and blood-red blooms, and a fine grain overlay. All
+     * textures are self-hosted (CSP stays 'self'). */
+    background-color: #efe7cf;
     background-image:
-      radial-gradient(circle at 20% 15%, rgba(201, 162, 39, 0.08), transparent 45%),
-      radial-gradient(circle at 85% 80%, rgba(140, 47, 47, 0.07), transparent 40%);
+      linear-gradient(rgba(201, 162, 39, 0.05), rgba(201, 162, 39, 0.05)),
+      url("/icons/tex-grain.svg"),
+      url("/icons/tex-damask.svg"),
+      radial-gradient(circle at 18% 12%, rgba(201, 162, 39, 0.16), transparent 42%),
+      radial-gradient(circle at 86% 6%, rgba(140, 47, 47, 0.1), transparent 38%),
+      radial-gradient(circle at 50% 108%, rgba(79, 111, 82, 0.12), transparent 46%);
+    background-size: auto, 220px 220px, 140px 140px, auto, auto, auto;
+    background-attachment: fixed;
   }
 
   h1,
@@ -68,38 +77,89 @@
     outline: 3px solid theme("colors.gold.DEFAULT");
     outline-offset: 2px;
   }
+
+  /* A darker, torch-lit canvas used on full-page screens (login, 404). */
+  body.night {
+    @apply text-parchment;
+    background-color: #23253a;
+    background-image:
+      url("/icons/tex-grain.svg"),
+      radial-gradient(circle at 50% -10%, rgba(201, 162, 39, 0.22), transparent 55%),
+      radial-gradient(circle at 12% 88%, rgba(140, 47, 47, 0.28), transparent 50%),
+      radial-gradient(circle at 92% 80%, rgba(79, 111, 82, 0.18), transparent 45%),
+      repeating-linear-gradient(115deg, rgba(255, 255, 255, 0.015) 0 2px, transparent 2px 9px);
+    background-size: 220px 220px, auto, auto, auto, auto;
+    background-attachment: fixed;
+  }
 }
 
 /* ---- Components ------------------------------------------------------- */
 @layer components {
   .btn {
-    @apply inline-flex items-center justify-center gap-2 rounded-md border px-4 py-2
+    @apply relative inline-flex items-center justify-center gap-2 rounded-md border px-4 py-2
       font-display font-semibold tracking-wide transition
       disabled:cursor-not-allowed disabled:opacity-40;
+    /* Embossed metal edge: a bright inner top highlight and a deep drop. */
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.35),
+      inset 0 -2px 4px rgba(0, 0, 0, 0.22),
+      0 3px 6px rgba(20, 14, 8, 0.35);
+    text-shadow: 0 1px 1px rgba(0, 0, 0, 0.28);
+  }
+  .btn:hover:not(:disabled) {
+    transform: translateY(-1px);
+  }
+  .btn:active:not(:disabled) {
+    transform: translateY(1px);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.25),
+      inset 0 2px 5px rgba(0, 0, 0, 0.3),
+      0 1px 2px rgba(20, 14, 8, 0.3);
   }
 
   .btn-gold {
-    @apply border-gold-dark bg-gradient-to-b from-gold-light to-gold text-ink shadow
+    @apply border-gold-dark bg-gradient-to-b from-gold-light to-gold text-ink
       hover:from-gold hover:to-gold-dark;
+    color: #33270a;
+    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.35);
   }
 
   .btn-herald {
-    @apply border-herald-dark bg-gradient-to-b from-herald-light to-herald text-parchment shadow
+    @apply border-herald-dark bg-gradient-to-b from-herald-light to-herald text-parchment
       hover:from-herald hover:to-herald-dark;
   }
 
   .btn-royal {
-    @apply border-royal bg-gradient-to-b from-royal-light to-royal text-parchment shadow
+    @apply border-royal bg-gradient-to-b from-royal-light to-royal text-parchment
       hover:from-royal hover:to-ink;
   }
 
   .btn-forest {
-    @apply border-forest-dark bg-gradient-to-b from-forest-light to-forest text-ink shadow
+    @apply border-forest-dark bg-gradient-to-b from-forest-light to-forest text-parchment
       hover:from-forest hover:to-forest-dark;
   }
 
+  /* Small square icon button (header tools: language, share, fullscreen). */
+  .icon-btn {
+    @apply inline-flex items-center justify-center rounded-md border border-gold-dark/70
+      bg-royal-light/90 p-1.5 text-parchment transition hover:bg-royal;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 2px 4px rgba(20, 14, 8, 0.3);
+  }
+  .icon-btn svg {
+    display: block;
+  }
+
+  /* Parchment panel with letterpress depth and a faint heraldic tint. */
   .panel {
-    @apply rounded-lg border border-gold-dark/50 bg-parchment-dark/80 shadow-banner backdrop-blur-sm;
+    @apply relative rounded-lg border border-gold-dark/50 bg-parchment-dark/80 shadow-banner backdrop-blur-sm;
+    background-image:
+      url("/icons/tex-grain.svg"),
+      linear-gradient(180deg, rgba(255, 255, 255, 0.35), rgba(216, 198, 155, 0.15));
+    background-size: 220px 220px, auto;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.5),
+      inset 0 0 0 1px rgba(201, 162, 39, 0.18),
+      0 10px 26px rgba(20, 14, 8, 0.3);
   }
 
   /* Display for panels that are toggled with the `hidden` utility. The utility
@@ -109,6 +169,64 @@
     display: flex;
   }
 
+  /* Fraktur-style framed panel: a double gold rule and corner filigree. */
+  .frame {
+    position: relative;
+    border-radius: 10px;
+    border: 1px solid theme("colors.gold.dark");
+    box-shadow:
+      inset 0 0 0 1px rgba(201, 162, 39, 0.35),
+      inset 0 0 0 5px rgba(244, 241, 222, 0.35),
+      inset 0 0 0 6px rgba(201, 162, 39, 0.25),
+      0 12px 30px rgba(20, 14, 8, 0.35);
+  }
+
+  /* Heraldic banner: deep royal with a woven texture and a gilded bottom rail. */
+  .heraldic {
+    position: relative;
+    color: theme("colors.parchment.DEFAULT");
+    background-color: theme("colors.royal.DEFAULT");
+    background-image:
+      url("/icons/tex-grain.svg"),
+      url("/icons/tex-damask.svg"),
+      repeating-linear-gradient(115deg, rgba(255, 255, 255, 0.035) 0 2px, transparent 2px 10px),
+      linear-gradient(180deg, rgba(109, 112, 138, 0.6), rgba(43, 45, 67, 0.85));
+    background-size: 220px 220px, 140px 140px, auto, auto;
+    border-bottom: 4px solid theme("colors.gold.DEFAULT");
+    box-shadow:
+      inset 0 -1px 0 rgba(240, 220, 148, 0.6),
+      0 8px 24px rgba(0, 0, 0, 0.4);
+  }
+  .heraldic-title {
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.55), 0 0 18px rgba(201, 162, 39, 0.35);
+  }
+
+  /* Gilded rule with a centred diamond — a section divider. */
+  .rule {
+    position: relative;
+    height: 2px;
+    border: 0;
+    background: linear-gradient(90deg, transparent, rgba(201, 162, 39, 0.75), transparent);
+  }
+  .rule::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 8px;
+    height: 8px;
+    transform: translate(-50%, -50%) rotate(45deg);
+    background: theme("colors.gold.DEFAULT");
+    box-shadow: 0 0 6px rgba(201, 162, 39, 0.7);
+  }
+
+  /* A small engraved label ("chip"). */
+  .chip {
+    @apply inline-flex items-center gap-1 rounded border border-gold-dark/50 bg-parchment-deeper/80 px-2 py-0.5
+      font-display text-[0.65rem] font-semibold uppercase tracking-widest text-ink-soft;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  }
+
   .field-label {
     @apply mb-1 block font-display text-sm font-semibold text-ink-soft;
   }
@@ -116,18 +234,51 @@
   .input {
     @apply w-full rounded-md border border-ink-soft/40 bg-parchment px-3 py-2 text-ink
       placeholder:text-ink-soft/50 focus:border-gold focus:outline-none;
+    box-shadow: inset 0 2px 4px rgba(20, 14, 8, 0.14);
   }
 
   /* Room list row in the lobby. */
   .room-row {
-    @apply flex cursor-pointer items-center justify-between rounded-md border border-gold-dark/40
-      bg-parchment-dark px-4 py-3 text-left font-display font-semibold transition
+    @apply relative flex cursor-pointer items-center justify-between gap-3 overflow-hidden rounded-md
+      border border-gold-dark/40 bg-parchment-dark px-4 py-3 text-left font-display font-semibold transition
       hover:border-gold hover:bg-parchment-deeper;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  }
+  .room-row::before {
+    content: "";
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 4px;
+    background: linear-gradient(180deg, theme("colors.gold.light"), theme("colors.gold.dark"));
+  }
+  .room-row:hover {
+    transform: translateX(2px);
   }
 
   /* Language picker link; the active one is marked by the client (bold + gold). */
   .lang-link {
     @apply cursor-pointer text-ink transition hover:text-gold-dark;
+  }
+
+  /* Dropdown menu (language switcher). */
+  .menu {
+    @apply absolute right-0 z-50 mt-2 w-48 overflow-hidden rounded-lg border border-gold-dark/60
+      bg-parchment p-1 font-display shadow-banner;
+  }
+  .menu-item {
+    @apply flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm font-semibold text-ink
+      transition hover:bg-parchment-deeper;
+  }
+  .menu-item[aria-current="true"] {
+    @apply bg-royal/10 text-royal;
+  }
+  .menu-flag {
+    width: 1.5rem;
+    height: 1rem;
+    border-radius: 2px;
+    border: 1px solid rgba(20, 14, 8, 0.35);
+    box-shadow: 0 1px 2px rgba(20, 14, 8, 0.25);
+    flex: 0 0 auto;
   }
 }
 
@@ -144,7 +295,19 @@
     background-size: var(--sprite-w) var(--sprite-h);
     filter: brightness(1.2);
     flex: 0 0 auto;
-    transition: transform 0.12s ease, box-shadow 0.12s ease;
+    /* Gilded edge + engraved depth. No transform/z-index: the hand overlaps its
+     * cards, so a lifted or re-stacked card would swallow a neighbour's click. */
+    border: 1px solid rgba(201, 162, 39, 0.55);
+    box-shadow:
+      0 5px 10px rgba(20, 14, 8, 0.45),
+      inset 0 0 0 1px rgba(255, 255, 255, 0.25);
+    transition: box-shadow 0.12s ease;
+  }
+  .cards:hover {
+    box-shadow:
+      0 7px 14px rgba(20, 14, 8, 0.5),
+      0 0 0 1px rgba(201, 162, 39, 0.7),
+      inset 0 0 0 1px rgba(255, 255, 255, 0.3);
   }
 
   /* Sprite grid positions (13 ranks on a 5 x 3 sheet). */
@@ -166,6 +329,8 @@
     background: url("/icons/img-cover.jpg") no-repeat center;
     background-size: 110px;
     border-radius: 8px;
+    border: 1px solid rgba(201, 162, 39, 0.6);
+    box-shadow: 0 5px 10px rgba(20, 14, 8, 0.45), inset 0 0 0 1px rgba(255, 255, 255, 0.2);
   }
 
   /* The negative overlap margin on the first card of every wrapped line would
@@ -224,12 +389,21 @@
   .currentTurn {
     @apply ring-2 ring-gold;
     box-shadow: 0 0 18px rgba(201, 162, 39, 0.55);
+    background-image: linear-gradient(180deg, rgba(201, 162, 39, 0.16), rgba(201, 162, 39, 0.05));
   }
 
   /* A player seat around the table. */
   .seat {
     @apply relative flex min-h-[84px] flex-col items-center justify-start overflow-hidden rounded-md
       border border-gold-dark/40 bg-parchment-dark px-1 py-1 text-center text-xs sm:min-h-[104px] sm:text-sm;
+    background-image:
+      url("/icons/tex-grain.svg"),
+      linear-gradient(180deg, rgba(255, 255, 255, 0.4), rgba(216, 198, 155, 0.28));
+    background-size: 220px 220px, auto;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.45),
+      inset 0 0 0 1px rgba(201, 162, 39, 0.14),
+      0 3px 8px rgba(20, 14, 8, 0.22);
   }
   .seat-body {
     @apply relative z-10 flex flex-col items-center gap-0.5;
@@ -251,9 +425,47 @@
 
   dialog.modal {
     @apply m-auto w-[min(92vw,30rem)] rounded-lg border border-gold-dark/60 bg-parchment p-0 text-ink shadow-banner;
+    background-image:
+      url("/icons/tex-grain.svg"),
+      linear-gradient(180deg, rgba(255, 255, 255, 0.4), rgba(216, 198, 155, 0.2));
+    background-size: 220px 220px, auto;
+    box-shadow:
+      inset 0 0 0 1px rgba(201, 162, 39, 0.35),
+      inset 0 0 0 5px rgba(244, 241, 222, 0.5),
+      0 20px 50px rgba(20, 14, 8, 0.55);
   }
   dialog.modal::backdrop {
     background: rgba(20, 14, 8, 0.65);
+    backdrop-filter: blur(2px);
+  }
+
+  /* The felt baize of the gaming table where plays land. */
+  .table-felt {
+    border-radius: 12px;
+    background-color: rgba(51, 80, 58, 0.82);
+    background-image:
+      url("/icons/tex-grain.svg"),
+      url("/icons/tex-damask.svg"),
+      radial-gradient(ellipse at 50% 40%, rgba(129, 178, 154, 0.4), transparent 70%);
+    background-size: 220px 220px, 140px 140px, auto;
+    border: 2px solid theme("colors.gold.dark");
+    box-shadow:
+      inset 0 0 40px rgba(20, 14, 8, 0.55),
+      inset 0 0 0 1px rgba(201, 162, 39, 0.4),
+      0 10px 26px rgba(20, 14, 8, 0.35);
+  }
+
+  /* Scroll-area styling for the chat log. */
+  .scroll-fancy {
+    scrollbar-color: rgba(138, 109, 26, 0.6) transparent;
+    scrollbar-width: thin;
+  }
+  .scroll-fancy::-webkit-scrollbar {
+    width: 8px;
+  }
+  .scroll-fancy::-webkit-scrollbar-thumb {
+    background: rgba(138, 109, 26, 0.55);
+    border-radius: 4px;
   }
 }
 

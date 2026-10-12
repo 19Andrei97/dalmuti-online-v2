@@ -145,11 +145,12 @@ if they go out).
 - Taxes are interactive: peon picks cards to give, dalmuti picks cards to return,
   with a timed auto-fallback (`resolveTaxes`).
 - Leader must play when the table is empty (server-enforced; `language.mustPlay`).
-- Simplified set sizes: a lead/follow uses at most **two** cards, and a two-card
-  set must include a Joker (`checkRule`). The official game allows a set of any
-  size of one rank; here all multi-card sets are pairs. Practical impact is tiny
-  because a rank can only be led in a set you actually hold a copy of, but a big
-  Peasant/Stonecutter run is impossible. This is an intentional, documented choice.
+- Set sizes: a lead/follow may hold **any number of copies of a single rank**
+  (e.g. four Peasants), and the Jokers are wild — each Joker played alongside
+  other cards takes on that rank, so `{9:3, 13:1}` is a legal set of four 9s.
+  `checkRule` enforces this by counting *distinct ranks*, not cards: at most two
+  distinct ranks, and if there are two then one must be the Joker. Jokers alone
+  count as a 13 and can never be led or used to beat a field.
 - "First-deal revolution" (an official optional variant) is not implemented.
 - The trick winner leads the next trick (see *Last play / field rendering*).
 

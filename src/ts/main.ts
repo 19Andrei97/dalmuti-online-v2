@@ -10,7 +10,8 @@ import {
   setText,
   show,
 } from "./dom";
-import { loadLanguage, resolveMessage, setLanguage, currentLang, type LangCode, type Language } from "./i18n";
+import { loadLanguage, resolveMessage, type Language } from "./i18n";
+import { applyLanguageUI, wireLanguageMenu } from "./lang-menu";
 import { connect, type TypedSocket } from "./socket";
 import { SelectionModel } from "./selection";
 import { classifyMove, fieldCount, hasLegalPlay, playableRanks } from "./client-rules";
@@ -107,11 +108,9 @@ function applyStaticTranslations(lang: Language): void {
     "join-room-confirm": lang.btnJoin,
     info: lang.info,
     "how-to-play": lang.howToPlay,
-    "choose-lang-label": lang.chooseLang,
     "play-btn": lang.pass,
     "ready-btn": lang.ready,
     "add-bot-btn": lang.addBot,
-    "share-btn": lang.share,
     "share-title": lang.shareTit,
     "share-label": lang.shareInvite,
     "share-close": lang.close,
@@ -120,11 +119,19 @@ function applyStaticTranslations(lang: Language): void {
     "bot-difficulty-label": lang.botDifficulty,
     "add-bot-confirm": lang.botAdd,
     "fill-bots": lang.fillBots,
-    "fullscreen-btn": lang.fullscreen,
     "select-hint": lang.selectHint,
     "revolution-text": lang.revolutionPrompt,
   };
   for (const [id, value] of Object.entries(map)) setText(maybeById(id) ?? document.createElement("span"), value);
+
+  // Icon buttons carry SVG, so their label is a tooltip/aria-label, not text.
+  for (const [id, label] of [["share-btn", lang.share], ["fullscreen-btn", lang.fullscreen]] as const) {
+    const btn = maybeById(id);
+    if (btn) {
+      btn.title = label;
+      btn.setAttribute("aria-label", label);
+    }
+  }
 
   const input = maybeById<HTMLInputElement>("message-input");
   if (input) input.placeholder = lang.write;
@@ -140,14 +147,7 @@ function applyStaticTranslations(lang: Language): void {
     if (difficulty[key]) option.textContent = difficulty[key];
   }
 
-  const active = currentLang();
-  for (const code of ["en", "it", "bg"] as LangCode[]) {
-    const link = maybeById<HTMLAnchorElement>(`lang-${code}`);
-    if (!link) continue;
-    link.classList.toggle("font-bold", code === active);
-    link.classList.toggle("text-gold-dark", code === active);
-    link.setAttribute("aria-current", code === active ? "true" : "false");
-  }
+  applyLanguageUI();
 }
 
 /* ---- shared chrome (toast, fullscreen, nickname dialog) ---------------- */
@@ -184,12 +184,7 @@ function wireSharedChrome(session: Session): void {
     openDialog(dlg);
   });
 
-  for (const code of ["en", "it", "bg"] as LangCode[]) {
-    maybeById(`lang-${code}`)?.addEventListener("click", (ev) => {
-      ev.preventDefault();
-      setLanguage(code);
-    });
-  }
+  wireLanguageMenu();
 
   const chatToggle = maybeById("chat-toggle");
   const chatPanel = maybeById("chat-panel");

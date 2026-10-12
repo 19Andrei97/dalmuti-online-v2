@@ -9,9 +9,26 @@
   <link rel="stylesheet" href="/css/app.css">
 </head>
 
-<body class="flex min-h-screen items-center justify-center bg-royal p-4">
-  <div class="panel w-[min(92vw,24rem)] bg-parchment p-6">
-    <h1 class="font-display text-xl font-bold text-royal">The Great Dalmuti</h1>
+<body class="night flex min-h-screen items-center justify-center p-4">
+  <div class="frame relative w-[min(92vw,24rem)] bg-parchment p-6 text-ink">
+    <div class="absolute right-3 top-3">
+      <button id="lang-btn" type="button" class="icon-btn h-8 w-8" aria-haspopup="true" aria-expanded="false"
+        title="Choose language" aria-label="Choose language">
+        <img id="lang-btn-flag" src="/icons/flag-en.svg" alt="" width="22" height="15" class="menu-flag">
+      </button>
+      <div id="lang-menu" class="menu hidden" role="menu">
+        <button type="button" class="menu-item" data-lang="en" role="menuitem"><img class="menu-flag"
+            src="/icons/flag-en.svg" alt="">English</button>
+        <button type="button" class="menu-item" data-lang="it" role="menuitem"><img class="menu-flag"
+            src="/icons/flag-it.svg" alt="">Italiano</button>
+        <button type="button" class="menu-item" data-lang="bg" role="menuitem"><img class="menu-flag"
+            src="/icons/flag-bg.svg" alt="">Български</button>
+      </div>
+    </div>
+    <div class="flex items-center gap-2">
+      <img src="/icons/crest.svg" alt="" class="h-9 w-8" aria-hidden="true">
+      <h1 class="font-display text-xl font-bold text-royal">The Great Dalmuti</h1>
+    </div>
     <form id="auth-form" class="mt-4">
       <label class="field-label" for="username">Username</label>
       <input id="username" name="username" class="input" autocomplete="username" required minlength="3"

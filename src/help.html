@@ -10,20 +10,24 @@
 </head>
 
 <body class="min-h-screen">
-  <header class="border-b-4 border-gold bg-royal text-parchment shadow-banner">
-    <div class="mx-auto flex max-w-3xl items-center justify-between gap-3 px-4 py-4">
-      <h1 class="font-display text-2xl font-bold text-gold-light">How to play</h1>
-      <nav class="flex gap-3 text-sm font-semibold">
-        <a class="underline" href="#en">English</a>
-        <a class="underline" href="#it">Italiano</a>
-        <a class="underline" href="#bg">Български</a>
+  <header class="heraldic">
+    <div class="mx-auto flex max-w-3xl flex-wrap items-center justify-between gap-3 px-4 py-4">
+      <h1 class="flex items-center gap-2 font-display text-2xl font-bold text-gold-light">
+        <img src="/icons/crest.svg" alt="" class="h-9 w-8" aria-hidden="true">
+        <span class="heraldic-title">How to play</span>
+      </h1>
+      <nav class="flex gap-2 text-sm font-semibold">
+        <a href="#en" class="chip bg-parchment text-ink no-underline hover:bg-gold-light">English</a>
+        <a href="#it" class="chip bg-parchment text-ink no-underline hover:bg-gold-light">Italiano</a>
+        <a href="#bg" class="chip bg-parchment text-ink no-underline hover:bg-gold-light">Български</a>
       </nav>
     </div>
   </header>
 
   <main class="mx-auto max-w-3xl px-4 py-6">
-    <section id="en" class="panel p-5">
+    <section id="en" class="frame bg-parchment-dark/50 p-5">
       <h2 class="font-display text-lg font-bold text-royal">English</h2>
+      <hr class="rule my-2">
       <ol class="mt-2 list-decimal space-y-2 pl-5 leading-relaxed">
         <li>Object: get rid of all your cards before anyone else. The faster you go out, the higher your rank in the next hand.</li>
         <li>Card order: the lower the number, the stronger the card. Rank 13 is the Jester (Joker), a wildcard and the weakest single card. A card's number matches how many copies of it are in the deck (one 1, two 2s, ... twelve 12s).</li>
@@ -37,8 +41,9 @@
       </ol>
     </section>
 
-    <section id="it" class="panel mt-4 p-5">
+    <section id="it" class="frame mt-4 bg-parchment-dark/50 p-5">
       <h2 class="font-display text-lg font-bold text-royal">Italiano</h2>
+      <hr class="rule my-2">
       <ol class="mt-2 list-decimal space-y-2 pl-5 leading-relaxed">
         <li>Obiettivo: liberarti di tutte le carte prima degli altri. Prima esci, più alto sarà il tuo rango nella mano successiva.</li>
         <li>Ordine delle carte: più basso è il numero, più forte è la carta. Il rango 13 è il Jolly, un jolly e la carta singola più debole. Il numero di una carta indica quante copie ce ne sono nel mazzo (un 1, due 2, ... dodici 12).</li>
@@ -52,8 +57,9 @@
       </ol>
     </section>
 
-    <section id="bg" class="panel mt-4 p-5">
+    <section id="bg" class="frame mt-4 bg-parchment-dark/50 p-5">
       <h2 class="font-display text-lg font-bold text-royal">Български</h2>
+      <hr class="rule my-2">
       <ol class="mt-2 list-decimal space-y-2 pl-5 leading-relaxed">
         <li>Цел: да се отървеш от всичките си карти преди останалите. Колкото по-бързо излизаш, толкова по-висок е рангът ти в следващата ръка.</li>
         <li>Ред на картите: колкото по-малко е числото, толкова по-силна е картата. Ранг 13 е Джокерът — заместител и най-слабата единична карта. Числото на картата показва колко копия има в тестето (един 1, два 2, ... дванадесет 12).</li>
@@ -70,5 +76,4 @@
     <a class="btn btn-gold mt-6 inline-flex" href="/">&larr; Back to lobby</a>
   </main>
 </body>
-
 </html>

@@ -78,6 +78,30 @@ test("checkRule: following rules (count and rank)", () => {
   assert.equal(checkRule(last, { 13: 2 }), false);
 });
 
+test("checkRule: a set may hold any number of copies of one rank", () => {
+  // Official rule: a lead/follow is a set of any size of a single rank.
+  assert.equal(checkRule(null, { 12: 4 }), true, "four peasants may be led");
+  assert.equal(checkRule(null, { 9: 5 }), true, "a five-card rank may be led");
+  assert.equal(checkRule({ num: 12, count: 4 }, { 7: 4 }), true);
+  assert.equal(checkRule({ num: 12, count: 4 }, { 3: 3 }), false, "wrong count");
+  assert.equal(checkRule({ num: 5, count: 4 }, { 5: 4 }), false, "equal rank cannot follow");
+});
+
+test("checkRule: Jokers are wild and complete a set of one rank", () => {
+  // Jesters played with other cards take on that rank; alone they are a 13.
+  assert.equal(checkRule(null, { 9: 1, 13: 1 }), true);
+  assert.equal(checkRule(null, { 9: 3, 13: 1 }), true, "one Joker completes four 9s");
+  assert.equal(checkRule(null, { 9: 2, 13: 2 }), true, "two Jokers complete four 9s");
+  assert.equal(checkRule(null, { 9: 1, 8: 1 }), false, "non-Joker ranks must match");
+  assert.equal(checkRule({ num: 12, count: 4 }, { 9: 3, 13: 1 }), true);
+  assert.equal(checkRule({ num: 12, count: 3 }, { 9: 1, 13: 2 }), true);
+  // Jokers alone are the worst cards (a 13): illegal to lead, and they cannot
+  // match any field because they never beat a real rank.
+  assert.equal(checkRule(null, { 13: 1 }), false);
+  assert.equal(checkRule(null, { 13: 2 }), false);
+  assert.equal(checkRule({ num: 12, count: 2 }, { 13: 2 }), false);
+});
+
 test("applyPlay removes exactly the selected cards and keeps a sorted numeric hand", () => {
   const hand = [1, 2, 2, 3, 13];
   const result = applyPlay(hand, { 2: 2, 13: 1 });

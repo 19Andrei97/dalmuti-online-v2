@@ -527,10 +527,19 @@ video {
   font-family: MedievalSharp, Georgia, serif;
   --tw-text-opacity: 1;
   color: rgb(42 35 32 / var(--tw-text-opacity, 1));
-    /* Subtle parchment grain via layered gradients. */
+    /* Layered medieval atmosphere: a warm parchment field, faint damask
+     * heraldry, gold and blood-red blooms, and a fine grain overlay. All
+     * textures are self-hosted (CSP stays 'self'). */
+    background-color: #efe7cf;
     background-image:
-      radial-gradient(circle at 20% 15%, rgba(201, 162, 39, 0.08), transparent 45%),
-      radial-gradient(circle at 85% 80%, rgba(140, 47, 47, 0.07), transparent 40%);
+      linear-gradient(rgba(201, 162, 39, 0.05), rgba(201, 162, 39, 0.05)),
+      url("/icons/tex-grain.svg"),
+      url("/icons/tex-damask.svg"),
+      radial-gradient(circle at 18% 12%, rgba(201, 162, 39, 0.16), transparent 42%),
+      radial-gradient(circle at 86% 6%, rgba(140, 47, 47, 0.1), transparent 38%),
+      radial-gradient(circle at 50% 108%, rgba(79, 111, 82, 0.12), transparent 46%);
+    background-size: auto, 220px 220px, 140px 140px, auto, auto, auto;
+    background-attachment: fixed;
 }
 
   h1,
@@ -544,6 +553,21 @@ video {
     outline: 3px solid #c9a227;
     outline-offset: 2px;
   }
+
+  /* A darker, torch-lit canvas used on full-page screens (login, 404). */
+  body.night {
+  --tw-text-opacity: 1;
+  color: rgb(244 241 222 / var(--tw-text-opacity, 1));
+    background-color: #23253a;
+    background-image:
+      url("/icons/tex-grain.svg"),
+      radial-gradient(circle at 50% -10%, rgba(201, 162, 39, 0.22), transparent 55%),
+      radial-gradient(circle at 12% 88%, rgba(140, 47, 47, 0.28), transparent 50%),
+      radial-gradient(circle at 92% 80%, rgba(79, 111, 82, 0.18), transparent 45%),
+      repeating-linear-gradient(115deg, rgba(255, 255, 255, 0.015) 0 2px, transparent 2px 9px);
+    background-size: 220px 220px, auto, auto, auto, auto;
+    background-attachment: fixed;
+}
 .\!container {
   width: 100% !important;
 }
@@ -601,6 +625,7 @@ video {
   }
 }
   .\!btn {
+  position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -623,6 +648,7 @@ video {
   opacity: 0.4;
 }
   .btn {
+  position: relative;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -644,6 +670,42 @@ video {
   cursor: not-allowed;
   opacity: 0.4;
 }
+  .\!btn {
+    /* Embossed metal edge: a bright inner top highlight and a deep drop. */
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.35),
+      inset 0 -2px 4px rgba(0, 0, 0, 0.22),
+      0 3px 6px rgba(20, 14, 8, 0.35) !important;
+    text-shadow: 0 1px 1px rgba(0, 0, 0, 0.28) !important;
+  }
+  .btn {
+    /* Embossed metal edge: a bright inner top highlight and a deep drop. */
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.35),
+      inset 0 -2px 4px rgba(0, 0, 0, 0.22),
+      0 3px 6px rgba(20, 14, 8, 0.35);
+    text-shadow: 0 1px 1px rgba(0, 0, 0, 0.28);
+  }
+  .\!btn:hover:not(:disabled) {
+    transform: translateY(-1px) !important;
+  }
+  .btn:hover:not(:disabled) {
+    transform: translateY(-1px);
+  }
+  .\!btn:active:not(:disabled) {
+    transform: translateY(1px) !important;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.25),
+      inset 0 2px 5px rgba(0, 0, 0, 0.3),
+      0 1px 2px rgba(20, 14, 8, 0.3) !important;
+  }
+  .btn:active:not(:disabled) {
+    transform: translateY(1px);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.25),
+      inset 0 2px 5px rgba(0, 0, 0, 0.3),
+      0 1px 2px rgba(20, 14, 8, 0.3);
+  }
 
   .btn-gold {
   --tw-border-opacity: 1;
@@ -655,9 +717,6 @@ video {
   --tw-gradient-to: #c9a227 var(--tw-gradient-to-position);
   --tw-text-opacity: 1;
   color: rgb(42 35 32 / var(--tw-text-opacity, 1));
-  --tw-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
-  --tw-shadow-colored: 0 1px 3px 0 var(--tw-shadow-color), 0 1px 2px -1px var(--tw-shadow-color);
-  box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
 }
 
   .btn-gold:hover {
@@ -666,6 +725,11 @@ video {
   --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
   --tw-gradient-to: #8a6d1a var(--tw-gradient-to-position);
 }
+
+  .btn-gold {
+    color: #33270a;
+    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.35);
+  }
 
   .btn-herald {
   --tw-border-opacity: 1;
@@ -677,9 +741,6 @@ video {
   --tw-gradient-to: #8c2f2f var(--tw-gradient-to-position);
   --tw-text-opacity: 1;
   color: rgb(244 241 222 / var(--tw-text-opacity, 1));
-  --tw-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
-  --tw-shadow-colored: 0 1px 3px 0 var(--tw-shadow-color), 0 1px 2px -1px var(--tw-shadow-color);
-  box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
 }
 
   .btn-herald:hover {
@@ -699,9 +760,6 @@ video {
   --tw-gradient-to: #3d405b var(--tw-gradient-to-position);
   --tw-text-opacity: 1;
   color: rgb(244 241 222 / var(--tw-text-opacity, 1));
-  --tw-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
-  --tw-shadow-colored: 0 1px 3px 0 var(--tw-shadow-color), 0 1px 2px -1px var(--tw-shadow-color);
-  box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
 }
 
   .btn-royal:hover {
@@ -720,10 +778,7 @@ video {
   --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to);
   --tw-gradient-to: #4f6f52 var(--tw-gradient-to-position);
   --tw-text-opacity: 1;
-  color: rgb(42 35 32 / var(--tw-text-opacity, 1));
-  --tw-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
-  --tw-shadow-colored: 0 1px 3px 0 var(--tw-shadow-color), 0 1px 2px -1px var(--tw-shadow-color);
-  box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+  color: rgb(244 241 222 / var(--tw-text-opacity, 1));
 }
 
   .btn-forest:hover {
@@ -733,19 +788,36 @@ video {
   --tw-gradient-to: #33503a var(--tw-gradient-to-position);
 }
 
-  .\!panel {
-  border-radius: 0.5rem;
+  /* Small square icon button (header tools: language, share, fullscreen). */
+  .icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.375rem;
   border-width: 1px;
-  border-color: rgb(138 109 26 / 0.5);
-  background-color: rgb(231 220 192 / 0.8);
-  --tw-shadow: inset 0 0 0 1px rgba(201,162,39,.5), 0 8px 24px rgba(0,0,0,.35);
-  --tw-shadow-colored: inset 0 0 0 1px var(--tw-shadow-color), 0 8px 24px var(--tw-shadow-color);
-  box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
-  --tw-backdrop-blur: blur(4px);
-  backdrop-filter: var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia);
+  border-color: rgb(138 109 26 / 0.7);
+  background-color: rgb(109 112 138 / 0.9);
+  padding: 0.375rem;
+  --tw-text-opacity: 1;
+  color: rgb(244 241 222 / var(--tw-text-opacity, 1));
+  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
 }
+  .icon-btn:hover {
+  --tw-bg-opacity: 1;
+  background-color: rgb(61 64 91 / var(--tw-bg-opacity, 1));
+}
+  .icon-btn {
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 2px 4px rgba(20, 14, 8, 0.3);
+  }
+  .icon-btn svg {
+    display: block;
+  }
 
-  .panel {
+  /* Parchment panel with letterpress depth and a faint heraldic tint. */
+  .\!panel {
+  position: relative;
   border-radius: 0.5rem;
   border-width: 1px;
   border-color: rgb(138 109 26 / 0.5);
@@ -756,6 +828,38 @@ video {
   --tw-backdrop-blur: blur(4px);
   backdrop-filter: var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia);
 }
+  .panel {
+  position: relative;
+  border-radius: 0.5rem;
+  border-width: 1px;
+  border-color: rgb(138 109 26 / 0.5);
+  background-color: rgb(231 220 192 / 0.8);
+  --tw-shadow: inset 0 0 0 1px rgba(201,162,39,.5), 0 8px 24px rgba(0,0,0,.35);
+  --tw-shadow-colored: inset 0 0 0 1px var(--tw-shadow-color), 0 8px 24px var(--tw-shadow-color);
+  box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+  --tw-backdrop-blur: blur(4px);
+  backdrop-filter: var(--tw-backdrop-blur) var(--tw-backdrop-brightness) var(--tw-backdrop-contrast) var(--tw-backdrop-grayscale) var(--tw-backdrop-hue-rotate) var(--tw-backdrop-invert) var(--tw-backdrop-opacity) var(--tw-backdrop-saturate) var(--tw-backdrop-sepia);
+}
+  .\!panel {
+    background-image:
+      url("/icons/tex-grain.svg"),
+      linear-gradient(180deg, rgba(255, 255, 255, 0.35), rgba(216, 198, 155, 0.15)) !important;
+    background-size: 220px 220px, auto !important;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.5),
+      inset 0 0 0 1px rgba(201, 162, 39, 0.18),
+      0 10px 26px rgba(20, 14, 8, 0.3) !important;
+  }
+  .panel {
+    background-image:
+      url("/icons/tex-grain.svg"),
+      linear-gradient(180deg, rgba(255, 255, 255, 0.35), rgba(216, 198, 155, 0.15));
+    background-size: 220px 220px, auto;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.5),
+      inset 0 0 0 1px rgba(201, 162, 39, 0.18),
+      0 10px 26px rgba(20, 14, 8, 0.3);
+  }
 
   /* Display for panels that are toggled with the `hidden` utility. The utility
      layer is emitted after the component layer, so `hidden` wins here — whereas
@@ -763,6 +867,80 @@ video {
   .panel-flex {
     display: flex;
   }
+
+  /* Fraktur-style framed panel: a double gold rule and corner filigree. */
+  .frame {
+    position: relative;
+    border-radius: 10px;
+    border: 1px solid #8a6d1a;
+    box-shadow:
+      inset 0 0 0 1px rgba(201, 162, 39, 0.35),
+      inset 0 0 0 5px rgba(244, 241, 222, 0.35),
+      inset 0 0 0 6px rgba(201, 162, 39, 0.25),
+      0 12px 30px rgba(20, 14, 8, 0.35);
+  }
+
+  /* Heraldic banner: deep royal with a woven texture and a gilded bottom rail. */
+  .heraldic {
+    position: relative;
+    color: #f4f1de;
+    background-color: #3d405b;
+    background-image:
+      url("/icons/tex-grain.svg"),
+      url("/icons/tex-damask.svg"),
+      repeating-linear-gradient(115deg, rgba(255, 255, 255, 0.035) 0 2px, transparent 2px 10px),
+      linear-gradient(180deg, rgba(109, 112, 138, 0.6), rgba(43, 45, 67, 0.85));
+    background-size: 220px 220px, 140px 140px, auto, auto;
+    border-bottom: 4px solid #c9a227;
+    box-shadow:
+      inset 0 -1px 0 rgba(240, 220, 148, 0.6),
+      0 8px 24px rgba(0, 0, 0, 0.4);
+  }
+  .heraldic-title {
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.55), 0 0 18px rgba(201, 162, 39, 0.35);
+  }
+
+  /* Gilded rule with a centred diamond — a section divider. */
+  .rule {
+    position: relative;
+    height: 2px;
+    border: 0;
+    background: linear-gradient(90deg, transparent, rgba(201, 162, 39, 0.75), transparent);
+  }
+  .rule::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: 8px;
+    height: 8px;
+    transform: translate(-50%, -50%) rotate(45deg);
+    background: #c9a227;
+    box-shadow: 0 0 6px rgba(201, 162, 39, 0.7);
+  }
+
+  /* A small engraved label ("chip"). */
+  .chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  border-radius: 0.25rem;
+  border-width: 1px;
+  border-color: rgb(138 109 26 / 0.5);
+  background-color: rgb(216 198 155 / 0.8);
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+  padding-top: 0.125rem;
+  padding-bottom: 0.125rem;
+  font-family: Cinzel, Georgia, serif;
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  --tw-text-opacity: 1;
+  color: rgb(74 64 56 / var(--tw-text-opacity, 1));
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4);
+}
 
   .field-label {
   margin-bottom: 0.25rem;
@@ -835,12 +1013,23 @@ video {
   outline-offset: 2px;
 }
 
+  .\!input {
+    box-shadow: inset 0 2px 4px rgba(20, 14, 8, 0.14) !important;
+  }
+
+  .input {
+    box-shadow: inset 0 2px 4px rgba(20, 14, 8, 0.14);
+  }
+
   /* Room list row in the lobby. */
   .room-row {
+  position: relative;
   display: flex;
   cursor: pointer;
   align-items: center;
   justify-content: space-between;
+  gap: 0.75rem;
+  overflow: hidden;
   border-radius: 0.375rem;
   border-width: 1px;
   border-color: rgb(138 109 26 / 0.4);
@@ -863,20 +1052,96 @@ video {
   --tw-bg-opacity: 1;
   background-color: rgb(216 198 155 / var(--tw-bg-opacity, 1));
 }
+  .room-row {
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4);
+  }
+  .room-row::before {
+    content: "";
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 4px;
+    background: linear-gradient(180deg, #e6c766, #8a6d1a);
+  }
+  .room-row:hover {
+    transform: translateX(2px);
+  }
 
   /* Language picker link; the active one is marked by the client (bold + gold). */
-  .lang-link {
-  cursor: pointer;
+
+  /* Dropdown menu (language switcher). */
+  .\!menu {
+  position: absolute;
+  right: 0px;
+  z-index: 50;
+  margin-top: 0.5rem;
+  width: 12rem;
+  overflow: hidden;
+  border-radius: 0.5rem;
+  border-width: 1px;
+  border-color: rgb(138 109 26 / 0.6);
+  --tw-bg-opacity: 1;
+  background-color: rgb(244 241 222 / var(--tw-bg-opacity, 1));
+  padding: 0.25rem;
+  font-family: Cinzel, Georgia, serif;
+  --tw-shadow: inset 0 0 0 1px rgba(201,162,39,.5), 0 8px 24px rgba(0,0,0,.35);
+  --tw-shadow-colored: inset 0 0 0 1px var(--tw-shadow-color), 0 8px 24px var(--tw-shadow-color);
+  box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+}
+  .menu {
+  position: absolute;
+  right: 0px;
+  z-index: 50;
+  margin-top: 0.5rem;
+  width: 12rem;
+  overflow: hidden;
+  border-radius: 0.5rem;
+  border-width: 1px;
+  border-color: rgb(138 109 26 / 0.6);
+  --tw-bg-opacity: 1;
+  background-color: rgb(244 241 222 / var(--tw-bg-opacity, 1));
+  padding: 0.25rem;
+  font-family: Cinzel, Georgia, serif;
+  --tw-shadow: inset 0 0 0 1px rgba(201,162,39,.5), 0 8px 24px rgba(0,0,0,.35);
+  --tw-shadow-colored: inset 0 0 0 1px var(--tw-shadow-color), 0 8px 24px var(--tw-shadow-color);
+  box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+}
+  .menu-item {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 0.5rem;
+  border-radius: 0.375rem;
+  padding-left: 0.75rem;
+  padding-right: 0.75rem;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  text-align: left;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+  font-weight: 600;
   --tw-text-opacity: 1;
   color: rgb(42 35 32 / var(--tw-text-opacity, 1));
   transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter;
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
   transition-duration: 150ms;
 }
-  .lang-link:hover {
-  --tw-text-opacity: 1;
-  color: rgb(138 109 26 / var(--tw-text-opacity, 1));
+  .menu-item:hover {
+  --tw-bg-opacity: 1;
+  background-color: rgb(216 198 155 / var(--tw-bg-opacity, 1));
 }
+  .menu-item[aria-current="true"] {
+  background-color: rgb(61 64 91 / 0.1);
+  --tw-text-opacity: 1;
+  color: rgb(61 64 91 / var(--tw-text-opacity, 1));
+}
+  .menu-flag {
+    width: 1.5rem;
+    height: 1rem;
+    border-radius: 2px;
+    border: 1px solid rgba(20, 14, 8, 0.35);
+    box-shadow: 0 1px 2px rgba(20, 14, 8, 0.25);
+    flex: 0 0 auto;
+  }
   .cards,
   .fieldCards {
     position: relative;
@@ -888,7 +1153,19 @@ video {
     background-size: var(--sprite-w) var(--sprite-h);
     filter: brightness(1.2);
     flex: 0 0 auto;
-    transition: transform 0.12s ease, box-shadow 0.12s ease;
+    /* Gilded edge + engraved depth. No transform/z-index: the hand overlaps its
+     * cards, so a lifted or re-stacked card would swallow a neighbour's click. */
+    border: 1px solid rgba(201, 162, 39, 0.55);
+    box-shadow:
+      0 5px 10px rgba(20, 14, 8, 0.45),
+      inset 0 0 0 1px rgba(255, 255, 255, 0.25);
+    transition: box-shadow 0.12s ease;
+  }
+  .cards:hover {
+    box-shadow:
+      0 7px 14px rgba(20, 14, 8, 0.5),
+      0 0 0 1px rgba(201, 162, 39, 0.7),
+      inset 0 0 0 1px rgba(255, 255, 255, 0.3);
   }
 
   /* Sprite grid positions (13 ranks on a 5 x 3 sheet). */
@@ -910,6 +1187,8 @@ video {
     background: url("/icons/img-cover.jpg") no-repeat center;
     background-size: 110px;
     border-radius: 8px;
+    border: 1px solid rgba(201, 162, 39, 0.6);
+    box-shadow: 0 5px 10px rgba(20, 14, 8, 0.45), inset 0 0 0 1px rgba(255, 255, 255, 0.2);
   }
 
   /* The negative overlap margin on the first card of every wrapped line would
@@ -982,6 +1261,7 @@ video {
   --tw-ring-opacity: 1;
   --tw-ring-color: rgb(201 162 39 / var(--tw-ring-opacity, 1));
     box-shadow: 0 0 18px rgba(201, 162, 39, 0.55);
+    background-image: linear-gradient(180deg, rgba(201, 162, 39, 0.16), rgba(201, 162, 39, 0.05));
 }
 
   /* A player seat around the table. */
@@ -1014,6 +1294,16 @@ video {
     line-height: 1.25rem;
   }
 }
+  .seat {
+    background-image:
+      url("/icons/tex-grain.svg"),
+      linear-gradient(180deg, rgba(255, 255, 255, 0.4), rgba(216, 198, 155, 0.28));
+    background-size: 220px 220px, auto;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.45),
+      inset 0 0 0 1px rgba(201, 162, 39, 0.14),
+      0 3px 8px rgba(20, 14, 8, 0.22);
+  }
   .seat-body {
   position: relative;
   z-index: 10;
@@ -1070,9 +1360,47 @@ video {
   --tw-shadow: inset 0 0 0 1px rgba(201,162,39,.5), 0 8px 24px rgba(0,0,0,.35);
   --tw-shadow-colored: inset 0 0 0 1px var(--tw-shadow-color), 0 8px 24px var(--tw-shadow-color);
   box-shadow: var(--tw-ring-offset-shadow, 0 0 #0000), var(--tw-ring-shadow, 0 0 #0000), var(--tw-shadow);
+    background-image:
+      url("/icons/tex-grain.svg"),
+      linear-gradient(180deg, rgba(255, 255, 255, 0.4), rgba(216, 198, 155, 0.2));
+    background-size: 220px 220px, auto;
+    box-shadow:
+      inset 0 0 0 1px rgba(201, 162, 39, 0.35),
+      inset 0 0 0 5px rgba(244, 241, 222, 0.5),
+      0 20px 50px rgba(20, 14, 8, 0.55);
 }
   dialog.modal::backdrop {
     background: rgba(20, 14, 8, 0.65);
+    backdrop-filter: blur(2px);
+  }
+
+  /* The felt baize of the gaming table where plays land. */
+  .table-felt {
+    border-radius: 12px;
+    background-color: rgba(51, 80, 58, 0.82);
+    background-image:
+      url("/icons/tex-grain.svg"),
+      url("/icons/tex-damask.svg"),
+      radial-gradient(ellipse at 50% 40%, rgba(129, 178, 154, 0.4), transparent 70%);
+    background-size: 220px 220px, 140px 140px, auto;
+    border: 2px solid #8a6d1a;
+    box-shadow:
+      inset 0 0 40px rgba(20, 14, 8, 0.55),
+      inset 0 0 0 1px rgba(201, 162, 39, 0.4),
+      0 10px 26px rgba(20, 14, 8, 0.35);
+  }
+
+  /* Scroll-area styling for the chat log. */
+  .scroll-fancy {
+    scrollbar-color: rgba(138, 109, 26, 0.6) transparent;
+    scrollbar-width: thin;
+  }
+  .scroll-fancy::-webkit-scrollbar {
+    width: 8px;
+  }
+  .scroll-fancy::-webkit-scrollbar-thumb {
+    background: rgba(138, 109, 26, 0.55);
+    border-radius: 4px;
   }
 .\!visible {
   visibility: visible !important;
@@ -1088,6 +1416,9 @@ video {
 }
 .absolute {
   position: absolute;
+}
+.relative {
+  position: relative;
 }
 .sticky {
   position: sticky;
@@ -1114,6 +1445,9 @@ video {
 .right-3 {
   right: 0.75rem;
 }
+.top-3 {
+  top: 0.75rem;
+}
 .z-30 {
   z-index: 30;
 }
@@ -1132,6 +1466,14 @@ video {
   margin-top: 0.25rem;
   margin-bottom: 0.25rem;
 }
+.my-2 {
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+.my-6 {
+  margin-top: 1.5rem;
+  margin-bottom: 1.5rem;
+}
 .mb-0\.5 {
   margin-bottom: 0.125rem;
 }
@@ -1143,6 +1485,9 @@ video {
 }
 .ml-2 {
   margin-left: 0.5rem;
+}
+.mr-2 {
+  margin-right: 0.5rem;
 }
 .mt-1 {
   margin-top: 0.25rem;
@@ -1177,11 +1522,26 @@ video {
 .hidden {
   display: none;
 }
+.h-11 {
+  height: 2.75rem;
+}
+.h-20 {
+  height: 5rem;
+}
 .h-32 {
   height: 8rem;
 }
 .h-4 {
   height: 1rem;
+}
+.h-7 {
+  height: 1.75rem;
+}
+.h-8 {
+  height: 2rem;
+}
+.h-9 {
+  height: 2.25rem;
 }
 .h-\[42vh\] {
   height: 42vh;
@@ -1198,11 +1558,29 @@ video {
 .min-h-screen {
   min-height: 100vh;
 }
+.w-11 {
+  width: 2.75rem;
+}
+.w-16 {
+  width: 4rem;
+}
 .w-32 {
   width: 8rem;
 }
 .w-4 {
   width: 1rem;
+}
+.w-6 {
+  width: 1.5rem;
+}
+.w-7 {
+  width: 1.75rem;
+}
+.w-8 {
+  width: 2rem;
+}
+.w-9 {
+  width: 2.25rem;
 }
 .w-\[min\(92vw\2c 24rem\)\] {
   width: min(92vw, 24rem);
@@ -1212,6 +1590,9 @@ video {
 }
 .w-full {
   width: 100%;
+}
+.min-w-0 {
+  min-width: 0px;
 }
 .max-w-3xl {
   max-width: 48rem;
@@ -1234,12 +1615,12 @@ video {
 .flex-1 {
   flex: 1 1 0%;
 }
+.shrink-0 {
+  flex-shrink: 0;
+}
 .-translate-x-1\/2 {
   --tw-translate-x: -50%;
   transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
-}
-.cursor-pointer {
-  cursor: pointer;
 }
 .list-decimal {
   list-style-type: decimal;
@@ -1273,6 +1654,9 @@ video {
 }
 .gap-1 {
   gap: 0.25rem;
+}
+.gap-1\.5 {
+  gap: 0.375rem;
 }
 .gap-2 {
   gap: 0.5rem;
@@ -1323,22 +1707,15 @@ video {
 .border {
   border-width: 1px;
 }
-.border-4 {
-  border-width: 4px;
-}
-.border-b-4 {
-  border-bottom-width: 4px;
-}
 .border-t {
   border-top-width: 1px;
-}
-.border-gold {
-  --tw-border-opacity: 1;
-  border-color: rgb(201 162 39 / var(--tw-border-opacity, 1));
 }
 .border-gold-dark {
   --tw-border-opacity: 1;
   border-color: rgb(138 109 26 / var(--tw-border-opacity, 1));
+}
+.border-gold-dark\/30 {
+  border-color: rgb(138 109 26 / 0.3);
 }
 .border-gold-dark\/40 {
   border-color: rgb(138 109 26 / 0.4);
@@ -1360,6 +1737,12 @@ video {
 .bg-parchment {
   --tw-bg-opacity: 1;
   background-color: rgb(244 241 222 / var(--tw-bg-opacity, 1));
+}
+.bg-parchment-dark\/40 {
+  background-color: rgb(231 220 192 / 0.4);
+}
+.bg-parchment-dark\/50 {
+  background-color: rgb(231 220 192 / 0.5);
 }
 .bg-parchment-dark\/95 {
   background-color: rgb(231 220 192 / 0.95);
@@ -1409,6 +1792,10 @@ video {
   padding-top: 0.25rem;
   padding-bottom: 0.25rem;
 }
+.py-1\.5 {
+  padding-top: 0.375rem;
+  padding-bottom: 0.375rem;
+}
 .py-2 {
   padding-top: 0.5rem;
   padding-bottom: 0.5rem;
@@ -1447,10 +1834,6 @@ video {
 .text-4xl {
   font-size: 2.25rem;
   line-height: 2.5rem;
-}
-.text-6xl {
-  font-size: 3.75rem;
-  line-height: 1;
 }
 .text-base {
   font-size: 1rem;
@@ -1503,6 +1886,10 @@ video {
   --tw-text-opacity: 1;
   color: rgb(140 47 47 / var(--tw-text-opacity, 1));
 }
+.text-ink {
+  --tw-text-opacity: 1;
+  color: rgb(42 35 32 / var(--tw-text-opacity, 1));
+}
 .text-ink-soft {
   --tw-text-opacity: 1;
   color: rgb(74 64 56 / var(--tw-text-opacity, 1));
@@ -1511,12 +1898,21 @@ video {
   --tw-text-opacity: 1;
   color: rgb(244 241 222 / var(--tw-text-opacity, 1));
 }
+.text-parchment\/80 {
+  color: rgb(244 241 222 / 0.8);
+}
+.text-parchment\/90 {
+  color: rgb(244 241 222 / 0.9);
+}
 .text-royal {
   --tw-text-opacity: 1;
   color: rgb(61 64 91 / var(--tw-text-opacity, 1));
 }
 .underline {
   text-decoration-line: underline;
+}
+.no-underline {
+  text-decoration-line: none;
 }
 .accent-royal {
   accent-color: #3d405b;
@@ -1616,11 +2012,23 @@ video {
     transition-duration: 0.001ms !important;
   }
 }
+.hover\:bg-gold-light:hover {
+  --tw-bg-opacity: 1;
+  background-color: rgb(230 199 102 / var(--tw-bg-opacity, 1));
+}
 .hover\:bg-royal:hover {
   --tw-bg-opacity: 1;
   background-color: rgb(61 64 91 / var(--tw-bg-opacity, 1));
 }
 @media (min-width: 640px) {
+
+  .sm\:h-10 {
+    height: 2.5rem;
+  }
+
+  .sm\:h-8 {
+    height: 2rem;
+  }
 
   .sm\:min-h-\[170px\] {
     min-height: 170px;
@@ -1628,6 +2036,14 @@ video {
 
   .sm\:min-h-\[190px\] {
     min-height: 190px;
+  }
+
+  .sm\:w-7 {
+    width: 1.75rem;
+  }
+
+  .sm\:w-9 {
+    width: 2.25rem;
   }
 
   .sm\:max-w-\[9rem\] {

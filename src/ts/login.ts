@@ -1,7 +1,11 @@
 /* Sign-in / registration form for the (deprecated) account system. */
+import { wireLanguageMenu } from "./lang-menu";
+
 interface AuthResponse {
   error?: string;
 }
+
+wireLanguageMenu();
 
 const form = document.getElementById("auth-form") as HTMLFormElement | null;
 const errorEl = document.getElementById("auth-error");
