@@ -223,7 +223,7 @@ test("Game.nextPlayer records who played last and resets the round to the leader
 
   // s0 plays; the field remembers the player and the rank/count.
   game.nextPlayer({ 7: 2 }, "s0");
-  assert.deepEqual(game.last, { num: 7, count: 2, by: "s0", handCount: null });
+  assert.deepEqual(game.last, { num: 7, count: 2, by: "s0", handCount: null, cards: [7, 7] });
 
   // s1 passes: the turn moves but the last play is untouched.
   game.nextPlayer({}, "s1");
@@ -273,7 +273,7 @@ test("a finished trick keeps its display copy in `shown`", () => {
   const roomData = { sockets: { s0: { seat: 0 }, s1: { seat: 1 } } };
   game.begin(roomData, ["s0", "s1"]);
   game.nextPlayer({ 7: 2 }, "s0", roomData);
-  assert.deepEqual(game.shown, { num: 7, count: 2, by: "s0", handCount: null });
+  assert.deepEqual(game.shown, { num: 7, count: 2, by: "s0", handCount: null, cards: [7, 7] });
 
   game.cur_order[1] = 0;
   game.nextPlayer({}, null, roomData);
@@ -298,4 +298,32 @@ test("if the trick winner has gone out, the lead passes clockwise", () => {
   assert.equal(roundOver, true);
   // Clockwise from the winner's seat (1) is seat 2, not the lowest seat (0).
   assert.equal(game.cur_order_idx, 2, "lead passes clockwise to the next seated player");
+});
+
+test("a play records its exact cards so a wild Joker stays a Joker", () => {
+  const game = new Game();
+  const roomData = { sockets: { s0: { seat: 0 }, s1: { seat: 1 } } };
+  game.begin(roomData, ["s0", "s1"]);
+  // s0 leads a pair of 5s using one 5 and one wild Joker.
+  game.nextPlayer({ 5: 1, 13: 1 }, "s0", roomData);
+  assert.equal(game.last.num, 5, "the rank played is 5");
+  assert.equal(game.last.count, 2);
+  assert.deepEqual(game.last.cards, [5, 13], "the Joker is kept as 13, not 5");
+  assert.deepEqual(game.shown.cards, [5, 13], "the display copy keeps the Joker too");
+});
+
+test("shown marks a game-ending finisher with handCount 0", () => {
+  const game = new Game();
+  const roomData = { sockets: { s0: { seat: 0 }, s1: { seat: 1 } } };
+  game.begin(roomData, ["s0", "s1"]);
+  game.nextPlayer({ 12: 1 }, "s0", roomData); // s0 leads
+  game.nextPlayer({ 3: 1 }, "s1", roomData); // s1 beats it and goes out
+  // The room marks the finisher as out (order + turn).
+  game.order[1] = false;
+  game.cur_order[1] = -1;
+  const roundOver = game.nextPlayer({}, null, roomData); // s0 passes, trick ends
+
+  assert.equal(roundOver, true, "only s0 still playing -> round ends");
+  assert.equal(game.shown.by, "s1", "the winner's play leads the next display");
+  assert.equal(game.shown.handCount, 0, "the finisher is marked as the winner");
 });

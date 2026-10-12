@@ -40,6 +40,8 @@ export interface LastPlay {
   count: number;
   by: string;
   handCount?: number;
+  /** Exact cards of the play (Jokers kept as 13) so the table shows a Joker. */
+  cards?: CardValue[];
 }
 
 export interface TaxPhase {

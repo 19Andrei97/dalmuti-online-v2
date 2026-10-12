@@ -63,7 +63,7 @@
     "greaterRevolution": "called a GREATER REVOLUTION! Everyone swaps places.",
     "revolutionPrompt": "You hold both Jokers. Declare a revolution to cancel the taxes?",
     "revolutionPromptGreater": "You hold both Jokers as Greater Peon. Declare a GREATER REVOLUTION to swap everyone's places?",
-    "taxPeonPrompt": "Choose your best cards to give to the Dalmuti:",
+    "taxPeonPrompt": "Your best cards are given to the Dalmuti automatically.",
     "taxDalmutiPrompt": "Choose cards to return to the Peon:",
     "addBot": "Add bot",
     "addBotTitle": "Add a bot",
@@ -80,5 +80,10 @@
     "fillBots": "Fill with bots",
     "botAdd": "Add",
     "fullscreen": "Fullscreen",
-    "selectHint": "Tap a card to pick it (all copies of a rank, up to the cards needed). Shift-tap or long press for one copy. Dimmed cards are a rule hint and can still be picked."
+    "selectHint": "Tap a card to pick it (all copies of a rank, up to the cards needed). Shift-tap or long press for one copy. Dimmed cards are a rule hint and can still be picked.",
+    "you": "You",
+    "wonHand": "won the hand!",
+    "youWonHand": "You won the hand!",
+    "taxDue": "Tax due:",
+    "taxPaid": "Tax paid"
 }

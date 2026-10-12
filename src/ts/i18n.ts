@@ -84,6 +84,11 @@ export interface Language {
   botAdd: string;
   fullscreen: string;
   selectHint: string;
+  you: string;
+  wonHand: string;
+  youWonHand: string;
+  taxDue: string;
+  taxPaid: string;
 }
 
 export type LangCode = "en" | "it" | "bg";

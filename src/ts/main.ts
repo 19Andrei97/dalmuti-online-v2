@@ -478,12 +478,13 @@ function wireServerEvents(session: Session): void {
     );
     toast(info.greater ? session.lang.revolutionPromptGreater : session.lang.revolutionPrompt);
   });
+  // Only the Dalmuti picks cards to return; the Peon's tribute is automatic.
   session.socket.on("tax phase", (info) => {
     const panel = maybeById("tax-panel");
     if (panel) show(panel, true);
     setText(
       maybeById("tax-title") ?? document.createElement("span"),
-      info.role === "peon" ? session.lang.taxPeonPrompt : session.lang.taxDalmutiPrompt
+      session.lang.taxDalmutiPrompt
     );
     const submit = maybeById<HTMLButtonElement>("tax-submit");
     if (submit) {
@@ -496,6 +497,26 @@ function wireServerEvents(session: Session): void {
       };
     }
     renderTaxCards(session, info.count);
+  });
+
+  // The Peon is told what they paid, not asked - a fast auto-swap must never
+  // leave them unaware that the tax happened. A toast fires immediately and a
+  // persistent banner stays for a few seconds (the toast alone is easy to miss).
+  session.socket.on("tax owed", (info) => {
+    toast(`${session.lang.taxDue} ${info.count} → ${info.partner}`);
+  });
+
+  session.socket.on("tax result", (info) => {
+    toast(`${session.lang.taxPaid}: ${info.sent} → ${info.received} (${info.partner})`);
+    const banner = maybeById("tax-result");
+    const text = maybeById("tax-result-text");
+    if (banner && text) {
+      text.textContent = `${session.lang.taxPaid}: ${info.sent} → ${info.received} (${info.partner})`;
+      show(banner, true);
+      window.clearTimeout(Number(banner.dataset.timer ?? "0"));
+      const timer = window.setTimeout(() => show(banner, false), 6000);
+      banner.dataset.timer = String(timer);
+    }
   });
 }
 
@@ -573,8 +594,10 @@ function renderRoom(session: Session, data: RoomData): void {
   renderBotList(session, data);
 
   renderSlots(session, data);
+  markMySeat(data);
   renderHand(session, data);
   renderField(session, data);
+  renderHandFinished(session, data);
   setPlayable(session, data);
   renderLeaderboard(data);
 
@@ -634,12 +657,13 @@ function renderSlots(session: Session, data: RoomData): void {
     if (player.seat >= 0 && !player.spectator) bySeat.set(player.seat, { sid, player });
   }
 
-  for (const [, { player }] of bySeat) {
+  for (const [, { sid, player }] of bySeat) {
     const seat = player.seat;
     const container = maybeById(`player${seat}`);
     if (!container) continue;
     const name = el("div", { class: "font-display font-bold break-all" });
     name.appendChild(document.createTextNode(player.nickname));
+    if (sid === data.you) name.appendChild(el("span", { class: "you-tag", text: session.lang.you }));
     if (player.isBot) name.appendChild(el("span", { class: "badge", text: session.lang.botLabel }));
     container.appendChild(name);
 
@@ -677,6 +701,15 @@ function renderSlots(session: Session, data: RoomData): void {
 function setRoleArt(seat: number, role: Role): void {
   const node = maybeById(`role${seat}`);
   if (node) node.className = `role-art role-${role}`;
+}
+
+/** Ring the recipient's own seat so they can find themselves at a glance. */
+function markMySeat(data: RoomData): void {
+  for (let i = 0; i < 8; i++) maybeById(`slot${i}`)?.classList.remove("mySeat");
+  const me = data.players[data.you];
+  if (me && !me.spectator && me.seat >= 0) {
+    maybeById(`slot${me.seat}`)?.classList.add("mySeat");
+  }
 }
 
 function renderBotList(session: Session, data: RoomData): void {
@@ -836,25 +869,36 @@ function renderField(session: Session, data: RoomData): void {
   // trick ends `last` is cleared but `shown` keeps the winning play on the table
   // until someone leads again.
   const last = data.shown;
-  const key = last ? `${last.by}:${last.num}:${last.count}:${last.handCount}` : "empty";
+  const key = last
+    ? `${last.by}:${last.num}:${last.count}:${last.handCount}:${(last.cards ?? []).join(",")}`
+    : "empty";
   if (key === session.lastPlayedKey) return;
   session.lastPlayedKey = key;
 
   clear(field);
-  if (who) clear(who);
+  if (who) {
+    clear(who);
+    who.classList.remove("who-won");
+  }
   if (!last || !last.num) return;
 
+  // A finisher (handCount 0) won the hand; make that unmistakable in place of the
+  // neutral "played:" label that would otherwise sit under their last cards.
+  const finished = typeof last.handCount === "number" && last.handCount === 0;
   if (who && last.by) {
     const player = data.players[last.by];
     if (player) {
-      const finished = typeof last.handCount === "number" && last.handCount === 0;
-      who.textContent = `${player.nickname} ${finished ? session.lang.winner : session.lang.placed}`;
+      who.textContent = `${player.nickname} ${finished ? session.lang.wonHand : session.lang.placed}`;
     }
   }
+  if (finished) who?.classList.add("who-won");
 
   for (let i = 0; i < last.count; i++) {
+    // Show the card actually played: a Joker stays a Joker even when it stood in
+    // for another rank, so everyone can see it was used.
+    const value = (last.cards && last.cards[i]) ?? last.num;
     const back = el("div", { class: "flip-face backCard absolute inset-0" });
-    const face = el("div", { class: `flip-face flip-back cards ${cardClass(last.num)}` });
+    const face = el("div", { class: `flip-face flip-back cards ${cardClass(value)}` });
     const inner = el("div", { class: "flip-inner card-enter", children: [back, face] });
     field.appendChild(inner);
   }
@@ -865,6 +909,18 @@ function renderField(session: Session, data: RoomData): void {
   window.requestAnimationFrame(() => {
     for (const inner of qsa(".flip-inner", field)) inner.classList.add("active");
   });
+}
+
+/* ---- hand finished banner ---------------------------------------------- */
+
+/** Show a prominent banner when the recipient has gone out for the hand. */
+function renderHandFinished(session: Session, data: RoomData): void {
+  const banner = maybeById("hand-finished");
+  if (!banner) return;
+  const me = data.players[data.you];
+  const out = !!me && !me.spectator && me.handCount === 0;
+  setText(maybeById("hand-finished-text") ?? document.createElement("span"), session.lang.youWonHand);
+  show(banner, out && data.state === GameState.PLAYING);
 }
 
 /* ---- tax --------------------------------------------------------------- */

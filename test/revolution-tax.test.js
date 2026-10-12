@@ -120,7 +120,7 @@ test("declining a revolution falls through to the tax phase", () => {
   assert.equal(room.phase.type, "tax");
 });
 
-test("interactive taxes: players choose the cards and the swap is applied", () => {
+test("taxes: only the Dalmuti chooses, the Peon's tribute is automatic", () => {
   const { manager } = makeManager();
   const order = ["a", "b", "c", "d", "e"];
   const hands = {
@@ -135,16 +135,72 @@ test("interactive taxes: players choose the cards and the swap is applied", () =
   assert.equal(room.phase.type, "tax");
 
   const fake = (id) => ({ id, userData: room.sockets[id], emit() {} });
-  manager.submitTax(fake("e"), { 6: 1, 7: 1 }); // Greater Peon gives best two
+  // The Peons do not submit; only the two Dalmutis pick their return cards.
   manager.submitTax(fake("a"), { 11: 1, 12: 1 }); // Greater Dalmuti returns worst two
-  manager.submitTax(fake("d"), { 4: 1 }); // Lesser Peon gives best one
   manager.submitTax(fake("b"), { 11: 1 }); // Lesser Dalmuti returns worst one
 
   assert.equal(room.game.state, game_state.PLAYING, "taxes resolved -> playing");
-  assert.deepEqual(room.sockets.e.hand, [8, 9, 11, 12]);
+  assert.deepEqual(room.sockets.e.hand, [8, 9, 11, 12], "peon gave best 6,7 automatically");
   assert.deepEqual(room.sockets.a.hand, [1, 2, 6, 7]);
   assert.deepEqual(room.sockets.d.hand, [5, 6, 7, 11]);
   assert.deepEqual(room.sockets.b.hand, [3, 4, 4, 10]);
+});
+
+test("taxes: a Peon never surrenders a Joker and a Dalmuti never returns one", () => {
+  const { manager } = makeManager();
+  const order = ["a", "b", "c", "d", "e"];
+  const hands = {
+    a: [1, 2, 3, 4, 12, JOKER], // Greater Dalmuti, plenty of non-Jokers
+    b: [3, 4, 10, 11],
+    c: [5, 6, 7, 8],
+    d: [4, 5, 6, 7],
+    e: [JOKER, 8, 9, 6, 7], // Greater Peon holding a Joker
+  };
+  const room = setupRoom(manager, order, hands);
+  manager.beginTaxPhase(room);
+  manager.resolveTaxes(room); // fallbacks only
+
+  // Peon gives the two lowest non-Jokers (6, 7), keeping the Joker.
+  assert.ok(room.sockets.e.hand.includes(JOKER), "peon keeps the Joker");
+  assert.deepEqual(room.sockets.e.hand.slice().sort((x, y) => x - y), [4, 8, 9, 12, JOKER]);
+  // Dalmuti returns its two worst non-Jokers (12, 4), never the Joker.
+  assert.ok(room.sockets.a.hand.includes(JOKER), "dalmuti keeps the Joker");
+  assert.deepEqual(room.sockets.a.hand.slice().sort((x, y) => x - y), [1, 2, 3, 6, 7, JOKER]);
+});
+
+test("taxes: the Peon is notified of the automatic payment and its result", () => {
+  const { io, manager } = makeManager();
+  const order = ["a", "b", "c", "d", "e"];
+  const hands = {
+    a: [1, 2, 11, 12], // Greater Dalmuti
+    b: [3, 4, 10, 11], // Lesser Dalmuti
+    c: [5, 6, 7, 8], // merchant
+    d: [4, 5, 6, 7], // Lesser Peon
+    e: [6, 7, 8, 9], // Greater Peon
+  };
+  const room = setupRoom(manager, order, hands);
+  manager.beginTaxPhase(room);
+
+  const owed = io.events.filter((e) => e.event === "tax owed");
+  // Both Peons are told what they owe, and are never sent the pick prompt.
+  assert.deepEqual(owed.map((e) => e.target).sort(), ["d", "e"]);
+  assert.equal(owed.find((e) => e.target === "e").args[0].count, 2);
+  assert.equal(owed.find((e) => e.target === "d").args[0].count, 1);
+  assert.equal(io.events.some((e) => e.event === "tax phase" && e.target === "e"), false);
+  assert.equal(
+    io.events.some((e) => e.event === "tax phase" && e.target === "a"),
+    true,
+    "only the Dalmuti is prompted"
+  );
+
+  io.events.length = 0;
+  manager.resolveTaxes(room);
+  const result = io.events.filter((e) => e.event === "tax result");
+  assert.deepEqual(result.map((e) => e.target).sort(), ["d", "e"]);
+  const peonE = result.find((e) => e.target === "e").args[0];
+  assert.equal(peonE.partner, "A", "names the Dalmuti");
+  assert.equal(peonE.sent, "6 & 7", "shows the cards sent");
+  assert.equal(peonE.received, "12 & 11", "shows the cards received");
 });
 
 test("tax auto-fallback uses the peon's best and the dalmuti's worst cards", () => {

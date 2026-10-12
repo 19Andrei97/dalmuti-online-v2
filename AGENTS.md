@@ -142,8 +142,12 @@ if they go out).
   or a card draw (`drawForOrder`) for the first hand. Game enters `TAXATION`.
 - Revolution: a player dealt both Jokers may declare it (Greater Peon ⇒ Greater
   Revolution reverses the whole order); it cancels taxes and starts play.
-- Taxes are interactive: peon picks cards to give, dalmuti picks cards to return,
-  with a timed auto-fallback (`resolveTaxes`).
+- Taxes are one-sided: the Peon's tribute is automatic (the lowest non-Joker
+  cards, never a Joker) and the Peon is merely notified (`tax owed`, then a
+  `tax result` confirmation). Only the Dalmuti chooses the cards to return
+  (`tax phase`), with a timed auto-fallback (`resolveTaxes`). Never surrender
+  the Joker when a non-Joker is available (`peonBestCards` /
+  `dalmutiWorstCards`).
 - Leader must play when the table is empty (server-enforced; `language.mustPlay`).
 - Set sizes: a lead/follow may hold **any number of copies of a single rank**
   (e.g. four Peasants), and the Jokers are wild — each Joker played alongside

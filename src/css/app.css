@@ -1264,6 +1264,56 @@ video {
     background-image: linear-gradient(180deg, rgba(201, 162, 39, 0.16), rgba(201, 162, 39, 0.05));
 }
 
+  /* The recipient's own seat: a bright outline + crown mark so they can find
+   * themselves at a glance. Uses `outline` (not ring/box-shadow) so it does not
+   * clobber the current-turn glow when it is also their turn. */
+  .mySeat {
+    outline: 2px solid #8c2f2f;
+    outline-offset: -1px;
+  }
+  .mySeat::after {
+    content: "♛";
+    position: absolute;
+    top: 1px;
+    left: 3px;
+    font-size: 0.85rem;
+    color: #c9a227;
+    text-shadow: 0 1px 1px rgba(20, 14, 8, 0.6);
+    pointer-events: none;
+  }
+  .you-tag {
+  margin-left: 0.25rem;
+  border-radius: 0.25rem;
+  --tw-bg-opacity: 1;
+  background-color: rgb(140 47 47 / var(--tw-bg-opacity, 1));
+  padding-left: 0.25rem;
+  padding-right: 0.25rem;
+  vertical-align: middle;
+  font-size: 0.6rem;
+  font-weight: 700;
+  --tw-text-opacity: 1;
+  color: rgb(244 241 222 / var(--tw-text-opacity, 1));
+}
+
+  /* The winner of a trick: a gold label so it reads differently from "played". */
+  .who-won {
+    color: #e6c766;
+    text-shadow: 0 1px 2px rgba(20, 14, 8, 0.7);
+  }
+
+  /* Banner shown to the player who has just gone out for the hand. `:not(.hidden)`
+   * keeps the higher specificity needed to beat the `hidden` utility. */
+  .hand-finished:not(.hidden) {
+    display: flex;
+  }
+  .hand-finished {
+    animation: hand-finished-in 0.35s ease-out both;
+  }
+  @keyframes hand-finished-in {
+    from { opacity: 0; transform: translateY(-6px); }
+    to { opacity: 1; transform: none; }
+  }
+
   /* A player seat around the table. */
   .seat {
   position: relative;
@@ -1698,6 +1748,9 @@ video {
 .break-all {
   word-break: break-all;
 }
+.rounded {
+  border-radius: 0.25rem;
+}
 .rounded-full {
   border-radius: 9999px;
 }
@@ -1707,8 +1760,15 @@ video {
 .border {
   border-width: 1px;
 }
+.border-2 {
+  border-width: 2px;
+}
 .border-t {
   border-top-width: 1px;
+}
+.border-gold {
+  --tw-border-opacity: 1;
+  border-color: rgb(201 162 39 / var(--tw-border-opacity, 1));
 }
 .border-gold-dark {
   --tw-border-opacity: 1;
@@ -1760,6 +1820,12 @@ video {
 }
 .bg-royal\/10 {
   background-color: rgb(61 64 91 / 0.1);
+}
+.bg-royal\/15 {
+  background-color: rgb(61 64 91 / 0.15);
+}
+.bg-royal\/20 {
+  background-color: rgb(61 64 91 / 0.2);
 }
 .p-2 {
   padding: 0.5rem;

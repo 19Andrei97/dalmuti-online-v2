@@ -63,7 +63,7 @@
     "greaterRevolution": "ha dichiarato una GRANDE RIVOLUZIONE! Tutti cambiano posto.",
     "revolutionPrompt": "Hai entrambi i Jolly. Dichiarare una rivoluzione per annullare le tasse?",
     "revolutionPromptGreater": "Hai entrambi i Jolly come Grande Peone. Dichiarare una GRANDE RIVOLUZIONE per scambiare i posti?",
-    "taxPeonPrompt": "Scegli le tue carte migliori da dare al Dalmuti:",
+    "taxPeonPrompt": "Le tue carte migliori vanno al Dalmuti automaticamente.",
     "taxDalmutiPrompt": "Scegli le carte da restituire al Peone:",
     "addBot": "Aggiungi bot",
     "addBotTitle": "Aggiungi un bot",
@@ -80,5 +80,10 @@
     "fillBots": "Riempi con bot",
     "botAdd": "Aggiungi",
     "fullscreen": "Schermo intero",
-    "selectHint": "Tocca una carta per sceglierla (tutte le copie di un valore, fino alle carte necessarie). Shift-tocca o tieni premuto per una copia. Le carte attenuate sono solo un suggerimento e si possono comunque scegliere."
+    "selectHint": "Tocca una carta per sceglierla (tutte le copie di un valore, fino alle carte necessarie). Shift-tocca o tieni premuto per una copia. Le carte attenuate sono solo un suggerimento e si possono comunque scegliere.",
+    "you": "Tu",
+    "wonHand": "ha vinto la mano!",
+    "youWonHand": "Hai vinto la mano!",
+    "taxDue": "Tassa dovuta:",
+    "taxPaid": "Tassa pagata"
 }

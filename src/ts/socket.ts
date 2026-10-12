@@ -24,6 +24,8 @@ export interface ServerToClientEvents {
   "chat connection": (user: ChatConnection) => void;
   "revolution phase": (info: RevolutionPhase) => void;
   "tax phase": (info: TaxPhase) => void;
+  "tax owed": (info: { kind: string; count: number; partner: string }) => void;
+  "tax result": (info: { role: string; partner: string; sent: string; received: string }) => void;
 }
 
 export interface ClientToServerEvents {

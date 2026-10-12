@@ -754,15 +754,9 @@ class RoomManager {
     for (const tax of taxes) {
       const from = room.sockets[tax.from];
       const to = room.sockets[tax.to];
-      if (from && !from.isBot) {
-        this.io.to(tax.from).emit("tax phase", {
-          kind: tax.kind,
-          role: "peon",
-          count: tax.count,
-          partner: to ? to.nickname : "",
-          deadline: room.phase.deadline,
-        });
-      }
+      // Only the Dalmuti picks cards to return. The Peon's tribute is automatic:
+      // the lowest cards (never a Joker) are sent, so the Peon is told rather
+      // than prompted.
       if (to && !to.isBot) {
         this.io.to(tax.to).emit("tax phase", {
           kind: tax.kind,
@@ -770,6 +764,13 @@ class RoomManager {
           count: tax.count,
           partner: from ? from.nickname : "",
           deadline: room.phase.deadline,
+        });
+      }
+      if (from && !from.isBot) {
+        this.io.to(tax.from).emit("tax owed", {
+          kind: tax.kind,
+          count: tax.count,
+          partner: to ? to.nickname : "",
         });
       }
     }
@@ -782,31 +783,26 @@ class RoomManager {
   }
 
   botInTax(room, tax) {
-    const from = room.sockets[tax.from];
+    // Only the Dalmuti side has a choice, so a bot only acts when it is the
+    // Dalmuti. A bot Peon pays automatically in resolveTaxes.
     const to = room.sockets[tax.to];
-    return (from && from.isBot) || (to && to.isBot);
+    return !!(to && to.isBot);
   }
 
-  // Have every bot involved in the current tax phase submit its cards at once,
-  // so a human partner is never left waiting on the timer.
+  // Have every bot Dalmuti submit its return cards at once, so a human partner
+  // is never left waiting on the timer.
   runBotTax(room) {
     const phase = room.phase;
     if (!phase || phase.type !== "tax") return;
     for (const tax of phase.taxes) {
-      const sides = [
-        { sid: tax.from, role: "peon" },
-        { sid: tax.to, role: "dalmuti" },
-      ];
-      for (const { sid, role } of sides) {
-        const p = room.sockets[sid];
-        if (!p || !p.isBot) continue;
-        const key = `${tax.kind}:${sid === tax.from ? "from" : "to"}`;
-        if (phase.submissions[key]) continue;
-        const cards = bot.chooseTax(p.hand, tax.count, role, p.difficulty, this.rng);
-        if (cards.length === tax.count) phase.submissions[key] = { sid, cards };
-      }
+      const p = room.sockets[tax.to];
+      if (!p || !p.isBot) continue;
+      const key = `${tax.kind}:to`;
+      if (phase.submissions[key]) continue;
+      const cards = bot.chooseTax(p.hand, tax.count, "dalmuti", p.difficulty, this.rng);
+      if (cards.length === tax.count) phase.submissions[key] = { sid: tax.to, cards };
     }
-    const need = phase.taxes.length * 2;
+    const need = phase.taxes.length;
     if (Object.keys(phase.submissions).length >= need) this.resolveTaxes(room);
     else this.broadcastRoom(room);
   }
@@ -816,9 +812,8 @@ class RoomManager {
     if (!entry) return;
     const { room } = entry;
     if (!room.phase || room.phase.type !== "tax") return;
-    const tax = room.phase.taxes.find(
-      (t) => t.from === socket.id || t.to === socket.id
-    );
+    // Only the Dalmuti chooses; a Peon has no cards to pick.
+    const tax = room.phase.taxes.find((t) => t.to === socket.id);
     if (!tax) return this.alert(socket, "language.cheat");
 
     const normalized = engine.validateSelection(selection);
@@ -832,11 +827,10 @@ class RoomManager {
       return this.alert(socket, "language.wrongCard");
     }
 
-    const side = socket.id === tax.from ? "from" : "to";
-    room.phase.submissions[`${tax.kind}:${side}`] = { sid: socket.id, cards };
+    room.phase.submissions[`${tax.kind}:to`] = { sid: socket.id, cards };
 
-    // Resolve as soon as every party has submitted.
-    const need = room.phase.taxes.length * 2;
+    // Resolve as soon as every Dalmuti has submitted.
+    const need = room.phase.taxes.length;
     if (Object.keys(room.phase.submissions).length >= need) this.resolveTaxes(room);
     else this.broadcastRoom(room);
   }
@@ -852,13 +846,10 @@ class RoomManager {
       const toPlayer = room.sockets[tax.to];
       if (!fromPlayer || !toPlayer) continue;
 
-      const fromSub = phase.submissions[`${tax.kind}:from`];
       const toSub = phase.submissions[`${tax.kind}:to`];
 
-      const peonCards =
-        fromSub && fromSub.cards.length === tax.count
-          ? fromSub.cards
-          : engine.peonBestCards(fromPlayer.hand, tax.count);
+      // The Peon always gives their lowest cards automatically.
+      const peonCards = engine.peonBestCards(fromPlayer.hand, tax.count);
       const dalmutiCards =
         toSub && toSub.cards.length === tax.count
           ? toSub.cards
@@ -887,6 +878,14 @@ class RoomManager {
         s.dalmutiCards.join(" & "), s.peonCards.join(" & "));
       this.io.to(s.tax.from).emit("chat announce taxs", "language.taxs", "red",
         s.peonCards.join(" & "), s.dalmutiCards.join(" & "));
+      // A dedicated, per-player confirmation so the Peon cannot miss that the
+      // tax was paid (the swap can resolve in an instant).
+      this.io.to(s.tax.from).emit("tax result", {
+        role: "peon",
+        partner: s.toPlayer.nickname,
+        sent: s.peonCards.join(" & "),
+        received: s.dalmutiCards.join(" & "),
+      });
     }
 
     this.beginPlaying(room);

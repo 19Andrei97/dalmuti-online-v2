@@ -132,6 +132,15 @@ function applyPlay(hand, selection) {
   return newHand;
 }
 
+// Expand a selection into an ordered list of card values (Jokers included).
+function cardsFromSelection(selection) {
+  const cards = [];
+  for (const card of Object.keys(selection).map(Number).sort((a, b) => a - b)) {
+    for (let i = 0; i < selection[card]; i++) cards.push(card);
+  }
+  return cards;
+}
+
 // ---- Social order / roles -------------------------------------------------
 
 // Assign roles from an ordered list of sids (best rank first).
@@ -216,18 +225,25 @@ function computeTaxes(roles) {
   return taxes;
 }
 
-// The Peon must surrender their best (lowest-numbered) cards; Jokers are never
-// surrendered because they are the worst cards and the Peon chooses the best.
+// The Peon surrenders their best (lowest-numbered) cards. Jokers are the worst
+// cards, so they sort last and are only ever given up if the Peon holds fewer
+// non-Joker cards than the tax demands.
 function peonBestCards(hand, count) {
   const sorted = hand.slice().sort((a, b) => a - b);
   return sorted.slice(0, count);
 }
 
 // Default return for the Dalmuti when a player does not choose: give away the
-// worst (highest-numbered) cards.
+// worst (highest-numbered) cards. A Joker is never returned while any other card
+// remains, since Jokers are the strongest cards to keep.
 function dalmutiWorstCards(hand, count) {
-  const sorted = hand.slice().sort((a, b) => b - a);
-  return sorted.slice(0, count);
+  const nonJokers = hand.filter((c) => c !== JOKER).sort((a, b) => b - a);
+  const out = nonJokers.slice(0, count);
+  for (const card of hand) {
+    if (out.length >= count) break;
+    if (card === JOKER) out.push(card);
+  }
+  return out;
 }
 
 function removeCards(hand, cards) {
@@ -341,11 +357,14 @@ class Game {
     }
 
     if (selected_card && Object.keys(selected_card).length > 0) {
-      this.last = { num: null, count: 0, by: playerSid || null, handCount: null };
+      this.last = { num: null, count: 0, by: playerSid || null, handCount: null, cards: [] };
       for (const [card, val] of Object.entries(selected_card)) {
         if (Number(card) !== JOKER) this.last.num = Number(card);
         this.last.count += val;
       }
+      // Keep the exact cards played (Jokers included) so the table can show a
+      // Joker as a Joker rather than the rank it stood in for.
+      this.last.cards = cardsFromSelection(selected_card);
       // Display copy: survives a completed trick so the winner's play stays on
       // the table, while `last` is cleared so the server still treats the next
       // play as a lead. `handCount` is filled in by the caller after the play.
@@ -366,15 +385,23 @@ class Game {
   nextRound(roomData) {
     const winnerSid = this.last && this.last.by ? this.last.by : null;
     const winner = winnerSid && roomData ? roomData.sockets[winnerSid] : null;
+    const winnerOut = !!(winner && winner.seat >= 0 && this.order && !this.order[winner.seat]);
 
     for (let i = 0; i < this.order.length; i++) {
       this.cur_order[i] = this.order[i] ? 1 : -1;
     }
     this.last = null;
     // The finished trick is shown, not cleared: the winner's play stays on the
-    // table (handCount marks a finisher as the winner).
+    // table. When the winner went out (ending the game) handCount is 0, which
+    // the client uses to label them the winner.
     this.shown = winnerSid
-      ? { num: this.shown ? this.shown.num : null, count: this.shown ? this.shown.count : 0, by: winnerSid, handCount: this.shown ? this.shown.handCount : null }
+      ? {
+          num: this.shown ? this.shown.num : null,
+          count: this.shown ? this.shown.count : 0,
+          cards: this.shown ? this.shown.cards : null,
+          by: winnerSid,
+          handCount: winnerOut ? 0 : this.shown ? this.shown.handCount : null,
+        }
       : null;
     // The trick winner leads the next trick. If they went out on that play, the
     // lead passes clockwise to the next player who still has cards.
@@ -420,6 +447,7 @@ module.exports = {
   selectionCount,
   checkRule,
   applyPlay,
+  cardsFromSelection,
   computeRoles,
   roleOf,
   drawForOrder,
