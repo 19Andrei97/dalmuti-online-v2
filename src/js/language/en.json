@@ -43,7 +43,7 @@
     "cheat": "This should not happen.",
     "waitTurn": "Please wait for your turn.",
     "noRoom": "No room found.",
-    "roomFull": "Room is full",
+    "roomFull": "The room is full.",
     "swap": " paid his bills to ",
     "placed": "played:",
     "taxs": [
@@ -80,6 +80,5 @@
     "fillBots": "Fill with bots",
     "botAdd": "Add",
     "fullscreen": "Fullscreen",
-    "revolutionReady": "You may declare a revolution.",
-    "selectHint": "Tap a card to pick it (all copies of a rank, up to the cards needed). Shift-tap or long press for one copy. Dimmed cards cannot be played."
+    "selectHint": "Tap a card to pick it (all copies of a rank, up to the cards needed). Shift-tap or long press for one copy. Dimmed cards are a rule hint and can still be picked."
 }

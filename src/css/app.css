@@ -1241,9 +1241,6 @@ video {
 .cursor-pointer {
   cursor: pointer;
 }
-.list-\[lower-alpha\] {
-  list-style-type: lower-alpha;
-}
 .list-decimal {
   list-style-type: decimal;
 }

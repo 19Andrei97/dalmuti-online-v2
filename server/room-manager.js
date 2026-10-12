@@ -116,7 +116,7 @@ class RoomManager {
     if (!selection) {
       if (room.game.last) {
         room.game.cur_order[me.seat] = 0;
-        room.game.nextPlayer({});
+        room.game.nextPlayer({}, null, room);
         this.broadcastRoom(room);
       }
       // Leading is always possible, so choosePlay returns a selection here.
@@ -181,6 +181,7 @@ class RoomManager {
       cur_order_idx: room.game.cur_order_idx,
       order: room.game.order,
       last: room.game.last,
+      shown: room.game.shown,
       roles: room.game.roles,
       socialOrder: room.game.socialOrder,
       leaderBoard: room.leaderBoard,
@@ -507,7 +508,7 @@ class RoomManager {
     if (room.game.state === game_state.PLAYING) {
       const seat = socket.userData.seat;
       room.game.updateOrder(seat);
-      if (room.game.cur_order_idx === seat) room.game.nextPlayer({});
+      if (room.game.cur_order_idx === seat) room.game.nextPlayer({}, null, room);
       if (room.game.isOneLeft()) this.finishGame(room);
       else this.scheduleNextBotTurn(room);
     }
@@ -883,9 +884,9 @@ class RoomManager {
         s.fromPlayer.nickname
       );
       this.io.to(s.tax.to).emit("chat announce taxs", "language.taxs", "green",
-        s.peonCards.join(" & "), s.dalmutiCards.join(" & "));
-      this.io.to(s.tax.from).emit("chat announce taxs", "language.taxs", "red",
         s.dalmutiCards.join(" & "), s.peonCards.join(" & "));
+      this.io.to(s.tax.from).emit("chat announce taxs", "language.taxs", "red",
+        s.peonCards.join(" & "), s.dalmutiCards.join(" & "));
     }
 
     this.beginPlaying(room);
@@ -920,7 +921,11 @@ class RoomManager {
     if (count === 0) {
       if (!game.last) return this.alert(socket, "language.mustPlay");
       game.cur_order[me.seat] = 0;
-      game.nextPlayer({});
+      // Local echo only (not a room broadcast): passing is private to the
+      // passer. A click on an empty selection is also how the client plays a
+      // forced pass, so this is the single place a human pass is announced.
+      socket.emit("chat announce", "language.passed", "black", me.nickname);
+      game.nextPlayer({}, null, room);
       this.broadcastRoom(room);
       this.scheduleNextBotTurn(room);
       return;
@@ -955,8 +960,11 @@ class RoomManager {
       }
     }
 
-    game.nextPlayer(selection, sid);
+    game.nextPlayer(selection, sid, room);
     if (game.last) game.last.handCount = me.hand.length;
+    // Keep the display copy in sync so the table shows the play (and marks a
+    // finisher as the winner) until the next play replaces it.
+    if (game.shown) game.shown.handCount = me.hand.length;
     this.broadcastRoom(room);
     this.scheduleNextBotTurn(room);
   }

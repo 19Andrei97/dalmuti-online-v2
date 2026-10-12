@@ -457,11 +457,10 @@ function wireServerEvents(session: Session): void {
     div.style.color = color;
     appendChat(div);
   });
-  session.socket.on("chat announce taxs", (key, color, paid, received) => {
+  session.socket.on("chat announce taxs", (key, color, sent, received) => {
     const resolved = resolveMessage(session.lang, key);
-    const lines: [string, string] = [resolved, ""];
     const div = el("div", { class: "font-bold" });
-    div.appendChild(document.createTextNode(`${lines[0]} ${paid}`));
+    div.appendChild(document.createTextNode(`${resolved} ${session.lang.taxs[0]} ${sent}`));
     div.appendChild(el("br"));
     div.appendChild(document.createTextNode(`${session.lang.taxs[1]} ${received}`));
     div.style.color = color;
@@ -838,7 +837,10 @@ function renderField(session: Session, data: RoomData): void {
   const who = maybeById("who-played");
   if (!field) return;
 
-  const last = data.state === GameState.PLAYING ? data.last : null;
+  // Render from the display copy `shown` (not the rule state `last`): after a
+  // trick ends `last` is cleared but `shown` keeps the winning play on the table
+  // until someone leads again.
+  const last = data.shown;
   const key = last ? `${last.by}:${last.num}:${last.count}:${last.handCount}` : "empty";
   if (key === session.lastPlayedKey) return;
   session.lastPlayedKey = key;

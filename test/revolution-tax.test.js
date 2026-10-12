@@ -166,6 +166,35 @@ test("tax auto-fallback uses the peon's best and the dalmuti's worst cards", () 
   assert.deepEqual(room.sockets.a.hand, [1, 2, 6, 7], "dalmuti gave worst 11,12");
 });
 
+test("the trick winner leads the next trick and is announced on a pass", () => {
+  const { io, manager } = makeManager();
+  const order = ["a", "b", "c"];
+  const hands = { a: [12, 7], b: [3, 4], c: [5, 6] };
+  const room = setupRoom(manager, order, hands);
+  room.game.state = game_state.PLAYING;
+  room.game.cur_order_idx = 0; // a (Greater Dalmuti) leads
+  room.game.last = null;
+
+  const sock = (sid) => ({
+    id: sid,
+    userData: room.sockets[sid],
+    emit: (event, ...args) => io.events.push({ event, args }),
+  });
+  manager.play(sock("a"), { 12: 1 }); // a leads a 12
+  manager.play(sock("b"), { 3: 1 }); // b beats it
+  manager.play(sock("c"), {}); // c passes
+  manager.play(sock("a"), {}); // a passes -> trick ends, b wins
+
+  assert.equal(room.game.cur_order_idx, room.sockets.b.seat, "b (trick winner) leads");
+  assert.equal(room.game.last, null, "rule state cleared for the new lead");
+  assert.equal(room.game.shown.by, "b", "the winning play stays on display");
+
+  const passAnnounce = io.events.filter(
+    (e) => e.event === "chat announce" && e.args[0] === "language.passed"
+  );
+  assert.ok(passAnnounce.length >= 1, "a human pass is echoed to chat");
+});
+
 test("the next hand re-seats players by the previous finishing order", () => {
   const { manager } = makeManager();
   const order = ["a", "b", "c"];

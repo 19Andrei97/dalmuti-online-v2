@@ -114,6 +114,9 @@ The client was migrated from hand-written CSS/JS to a small build toolchain:
 - `server/game-engine.js` — pure, transport-free rules: `shuffle`, `deal`,
   `drawForOrder`, `revolutionCandidates`, `computeRoles`, `roleOf`, `computeTaxes`,
   `validateSelection`, `checkValidity`, `checkRule`, `applyPlay`, `reverseOrder`.
+`Game.nextPlayer(selected_card, playerSid, roomData)` / `nextRound(roomData)` own
+turn advance and trick resolution (`roomData` lets the winner's seat be looked up
+if they go out).
 - `server/bot.js` — pure bot strategies (no room/transport state). `choosePlay`
   and `chooseTax` for three difficulties (`easy` random, `medium` sheds its
   worst legal cards, `hard` wins when it can and otherwise preserves Jokers).
@@ -142,6 +145,13 @@ The client was migrated from hand-written CSS/JS to a small build toolchain:
 - Taxes are interactive: peon picks cards to give, dalmuti picks cards to return,
   with a timed auto-fallback (`resolveTaxes`).
 - Leader must play when the table is empty (server-enforced; `language.mustPlay`).
+- Simplified set sizes: a lead/follow uses at most **two** cards, and a two-card
+  set must include a Joker (`checkRule`). The official game allows a set of any
+  size of one rank; here all multi-card sets are pairs. Practical impact is tiny
+  because a rank can only be led in a set you actually hold a copy of, but a big
+  Peasant/Stonecutter run is impossible. This is an intentional, documented choice.
+- "First-deal revolution" (an official optional variant) is not implemented.
+- The trick winner leads the next trick (see *Last play / field rendering*).
 
 ## Bots
 
@@ -167,17 +177,25 @@ The client was migrated from hand-written CSS/JS to a small build toolchain:
 
 ## Last play / field rendering
 
-- `Game.nextPlayer(selected_card, playerSid)` records
+- `Game.nextPlayer(selected_card, playerSid, roomData)` records
   `game.last = { num, count, by, handCount }` on a real play; a pass (`{}`) leaves
-  it untouched. Completing a round clears `last` and resets the turn to the first
-  playable seat (the leader). `room-manager` fills `last.handCount` after the
-  play so the client can tag a finisher as the winner.
-- The client renders the field from `roomData.last` (recipient view). `reloadField`
-  keys the rendered play as `${last.by}:${last.num}:${last.count}:${last.handCount}`
-  and returns early when the key is unchanged — an unrelated room refresh must not
-  rebuild the field, which would restart the flip animation. `whoPlayed` shows the
-  player from `last.by` (not the current-turn seat), so the label matches the cards
-  on the table.
+  it untouched. When a trick completes, `nextRound(roomData)` **keeps the winning
+  play in a display-only `game.shown`** and clears the rule state `last` (so the
+  next play is treated as a lead). `room-manager` fills `handCount` on both after
+  the play so the client can tag a finisher as the winner.
+- **The trick winner leads the next trick, not the social leader.** `nextRound`
+  sets `cur_order_idx` to the seat of `last.by`; if that player went out during
+  the trick, the lead passes clockwise to the next still-seated player
+  (`nextPlayableSeatFrom`). An earlier version wrongly always reset to the lowest
+  seat, handing the lead back to the Greater Dalmuti.
+- `roomView` exposes both `last` (rule state) and `shown` (display state). The
+  client renders the field from `roomData.shown`, not `last`: after a trick ends
+  `last` is null but `shown` keeps the winning cards on the table until a new lead.
+  `renderField` keys the rendered play as
+  `${shown.by}:${shown.num}:${shown.count}:${shown.handCount}` and returns early
+  when the key is unchanged — an unrelated room refresh must not rebuild the field,
+  which would restart the flip animation. `whoPlayed` shows the player from
+  `shown.by` (not the current-turn seat), so the label matches the cards on the table.
 - Field cards flip via `.flip-inner` (`rotateY(180deg)` when `.active`). Three traps:
   the entrance animation must **not** target `.flip-inner` at all — an opacity
   keyframe (even opacity-only, with `both` fill) on the 3D-transformed element

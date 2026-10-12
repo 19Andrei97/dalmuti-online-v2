@@ -269,6 +269,18 @@ function firstPlayableSeat(cur_order) {
   return -1;
 }
 
+// First still-playing seat strictly after `from` (wrapping): the lead passes
+// clockwise to the next player who still has cards when the trick winner left
+// the table by going out.
+function nextPlayableSeatFrom(cur_order, from) {
+  const n = cur_order.length;
+  for (let step = 1; step <= n; step++) {
+    const seat = (from + step) % n;
+    if (cur_order[seat] >= 1) return seat;
+  }
+  return -1;
+}
+
 class Game {
   constructor() {
     this.state = game_state.WAITING;
@@ -278,6 +290,7 @@ class Game {
     this.order = null;
     this.cur_order = null;
     this.last = null;
+    this.shown = null;
     this.socialOrder = null;
     this.roles = {};
     this.revolution = null;
@@ -312,6 +325,7 @@ class Game {
         ? leader.seat
         : firstPlayableSeat(this.cur_order);
     this.last = null;
+    this.shown = null;
   }
 
   updateOrder(seat) {
@@ -319,7 +333,7 @@ class Game {
     if (this.cur_order) this.cur_order[seat] = -1;
   }
 
-  nextPlayer(selected_card, playerSid) {
+  nextPlayer(selected_card, playerSid, roomData) {
     if (!this.cur_order) return undefined;
     this.cur_order_idx = (this.cur_order_idx + 1) % this.cur_order.length;
     while (this.cur_order[this.cur_order_idx] < 1) {
@@ -332,22 +346,45 @@ class Game {
         if (Number(card) !== JOKER) this.last.num = Number(card);
         this.last.count += val;
       }
+      // Display copy: survives a completed trick so the winner's play stays on
+      // the table, while `last` is cleared so the server still treats the next
+      // play as a lead. `handCount` is filled in by the caller after the play.
+      this.shown = { ...this.last };
     }
 
     let stillPlaying = 0;
     for (let i = 0; i < this.cur_order.length; i++) {
       if (this.cur_order[i] === 1) stillPlaying++;
     }
-    if (stillPlaying <= 1) return this.nextRound();
+    if (stillPlaying <= 1) return this.nextRound(roomData);
     return undefined;
   }
 
-  nextRound() {
+  // A completed trick is won by whoever made the last play, and that player
+  // leads the next trick (official rules). `roomData` is only needed if the
+  // winner went out on that play and we must fall back to a still-seated leader.
+  nextRound(roomData) {
+    const winnerSid = this.last && this.last.by ? this.last.by : null;
+    const winner = winnerSid && roomData ? roomData.sockets[winnerSid] : null;
+
     for (let i = 0; i < this.order.length; i++) {
       this.cur_order[i] = this.order[i] ? 1 : -1;
     }
     this.last = null;
-    this.cur_order_idx = firstPlayableSeat(this.cur_order);
+    // The finished trick is shown, not cleared: the winner's play stays on the
+    // table (handCount marks a finisher as the winner).
+    this.shown = winnerSid
+      ? { num: this.shown ? this.shown.num : null, count: this.shown ? this.shown.count : 0, by: winnerSid, handCount: this.shown ? this.shown.handCount : null }
+      : null;
+    // The trick winner leads the next trick. If they went out on that play, the
+    // lead passes clockwise to the next player who still has cards.
+    if (winner && winner.seat >= 0 && this.cur_order[winner.seat] === 1) {
+      this.cur_order_idx = winner.seat;
+    } else if (winner && winner.seat >= 0) {
+      this.cur_order_idx = nextPlayableSeatFrom(this.cur_order, winner.seat);
+    } else {
+      this.cur_order_idx = firstPlayableSeat(this.cur_order);
+    }
     return true;
   }
 
@@ -360,6 +397,7 @@ class Game {
   end() {
     this.state = game_state.WAITING;
     this.last = null;
+    this.shown = null;
     this.socialOrder = null;
     this.roles = {};
     this.revolution = null;
@@ -394,5 +432,6 @@ module.exports = {
   revolutionCandidates,
   reverseOrder,
   firstPlayableSeat,
+  nextPlayableSeatFrom,
   Game,
 };

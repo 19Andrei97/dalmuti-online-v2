@@ -43,7 +43,7 @@
     "cheat": "Questo non dovrebbe succedere",
     "waitTurn": "Attendi il tuo turno",
     "noRoom": "Nessuna stanza trovata",
-    "roomFull": "La stanza è piena",
+    "roomFull": "La stanza è piena.",
     "swap": " ha pagato le tasse a ",
     "placed": "ha giocato:",
     "taxs": [
@@ -80,6 +80,5 @@
     "fillBots": "Riempi con bot",
     "botAdd": "Aggiungi",
     "fullscreen": "Schermo intero",
-    "revolutionReady": "Puoi dichiarare una rivoluzione.",
-    "selectHint": "Tocca una carta per sceglierla (tutte le copie di un valore, fino alle carte necessarie). Shift-tocca o tieni premuto per una copia. Le carte attenuate non si possono giocare."
+    "selectHint": "Tocca una carta per sceglierla (tutte le copie di un valore, fino alle carte necessarie). Shift-tocca o tieni premuto per una copia. Le carte attenuate sono solo un suggerimento e si possono comunque scegliere."
 }

@@ -11,53 +11,59 @@
 
 <body class="min-h-screen">
   <header class="border-b-4 border-gold bg-royal text-parchment shadow-banner">
-    <div class="mx-auto max-w-3xl px-4 py-4">
+    <div class="mx-auto flex max-w-3xl items-center justify-between gap-3 px-4 py-4">
       <h1 class="font-display text-2xl font-bold text-gold-light">How to play</h1>
+      <nav class="flex gap-3 text-sm font-semibold">
+        <a class="underline" href="#en">English</a>
+        <a class="underline" href="#it">Italiano</a>
+        <a class="underline" href="#bg">Български</a>
+      </nav>
     </div>
   </header>
 
   <main class="mx-auto max-w-3xl px-4 py-6">
-    <section class="panel p-5">
+    <section id="en" class="panel p-5">
       <h2 class="font-display text-lg font-bold text-royal">English</h2>
       <ol class="mt-2 list-decimal space-y-2 pl-5 leading-relaxed">
-        <li>There is no card on the table, you can play any card you want (of the same rank, different number).
-          <ol class="mt-1 list-[lower-alpha] pl-5">
-            <li>If everyone else passes, the table will be emptied and a new round will start.</li>
-          </ol>
-        </li>
-        <li>When the table is occupied, you should play by the following rules:
-          <ol class="mt-1 list-[lower-alpha] pl-5">
-            <li>Number (count) of cards must be the same.</li>
-            <li>Rank of your cards must be higher (that is, the lower the number the better).</li>
-          </ol>
-        </li>
-        <li>When you empty your hand, you will win the game.</li>
-        <li>Card rank 13 is a Joker card; you can play it with other cards to match the number of cards on the table. There are only two of them.</li>
-        <li>The number of a card matches the rank of the card (except 13).</li>
-        <li>Taxes: at the start of a hand the Greater Peon gives their two best cards to the Greater Dalmuti, who returns two cards; the Lesser Peon and Lesser Dalmuti do the same with one card.</li>
-        <li>Revolution: a player dealt both Jokers may call a revolution, cancelling the taxes. If the Greater Peon does so it is a Greater Revolution and all players swap places.</li>
+        <li>Object: get rid of all your cards before anyone else. The faster you go out, the higher your rank in the next hand.</li>
+        <li>Card order: the lower the number, the stronger the card. Rank 13 is the Jester (Joker), a wildcard and the weakest single card. A card's number matches how many copies of it are in the deck (one 1, two 2s, ... twelve 12s).</li>
+        <li>Leading: when the table is empty, the leader plays a set — one or more cards of the same rank. The Greater Dalmuti leads the first trick. A lone Jester cannot be led.</li>
+        <li>Following: each player in turn must play the same number of cards of a strictly stronger rank (a lower number), or pass. A Jester can stand in for any card to complete a set: a 6 plus a Jester can be played as a pair of 6s.</li>
+        <li>The trick ends when everyone else has passed. The player who made the last play leads the next trick, and their cards stay on the table until the next play.</li>
+        <li>Going out: once you empty your hand you are out for that hand. The hand ends when only one player still holds cards.</li>
+        <li>Rank for the next hand: the finishing order sets everyone's seat. First out becomes the Greater Dalmuti, second the Lesser Dalmuti, the last player the Greater Peon, the second-to-last the Lesser Peon, and everyone else a Merchant.</li>
+        <li>Taxes: the Greater Peon gives their two best (lowest) cards to the Greater Dalmuti, who returns any two cards. The Lesser Peon and Lesser Dalmuti do the same with one card. Jesters are never surrendered — they are the worst cards, so a Peon's "best" cards are always low numbers.</li>
+        <li>Revolution: a player dealt both Jesters may call a revolution, cancelling the taxes. If the Greater Peon does so it is a Greater Revolution, and all players swap seats (the order reverses).</li>
       </ol>
     </section>
 
-    <section class="panel mt-4 p-5">
-      <h2 class="font-display text-lg font-bold text-royal">한국어</h2>
+    <section id="it" class="panel mt-4 p-5">
+      <h2 class="font-display text-lg font-bold text-royal">Italiano</h2>
       <ol class="mt-2 list-decimal space-y-2 pl-5 leading-relaxed">
-        <li>테이블에 카드가 없으면 원하는 카드를 낼 수 있습니다(단, 내는 카드의 랭크는 같아야합니다).
-          <ol class="mt-1 list-[lower-alpha] pl-5">
-            <li>나머지 플레이어가 모두 패스할 경우 테이블이 비워집니다.</li>
-          </ol>
-        </li>
-        <li>테이블에 카드가 있으면, 다음의 룰을 따라야 합니다.
-          <ol class="mt-1 list-[lower-alpha] pl-5">
-            <li>카드의 개수를 맞춰야합니다.</li>
-            <li>카드의 랭크가 더 높아야 합니다.(숫자가 작을 수록 랭크는 높음)</li>
-          </ol>
-        </li>
-        <li>핸드를 먼저 비우면 승리하게 됩니다.</li>
-        <li>카드(13)은 조커 카드입니다. 다른 카드와 같이 내서 카드의 개수를 맞추는데 사용할 수 있습니다. 판당 단 두 장만 존재합니다.</li>
-        <li>13을 제외한 각 카드의 개수는 랭크의 숫자와 같습니다.</li>
-        <li>세금: 판이 시작될 때 큰농부는 가장 좋은 카드 두 장을 대달무티에게 바치고, 대달무티는 두 장을 돌려줍니다. 작은농부와 작은달무티도 한 장씩 주고받습니다.</li>
-        <li>혁명: 조커 두 장을 받은 플레이어는 혁명을 선언해 세금을 취소할 수 있습니다. 큰농부가 선언하면 대혁명이 되어 모든 플레이어가 자리를 바꿉니다.</li>
+        <li>Obiettivo: liberarti di tutte le carte prima degli altri. Prima esci, più alto sarà il tuo rango nella mano successiva.</li>
+        <li>Ordine delle carte: più basso è il numero, più forte è la carta. Il rango 13 è il Jolly, un jolly e la carta singola più debole. Il numero di una carta indica quante copie ce ne sono nel mazzo (un 1, due 2, ... dodici 12).</li>
+        <li>Aprire il turno: quando il tavolo è vuoto, chi guida gioca un set — una o più carte dello stesso rango. Il Grande Dalmuti guida il primo giro. Un Jolly da solo non si può giocare come apertura.</li>
+        <li>Rispondere: ogni giocatore, a turno, deve giocare lo stesso numero di carte di rango strettamente più forte (numero più basso), oppure passare. Un Jolly può sostituire qualsiasi carta per completare un set: un 6 più un Jolly si giocano come una coppia di 6.</li>
+        <li>Il giro finisce quando tutti gli altri hanno passato. Chi ha fatto l'ultima giocata guida il giro successivo, e le sue carte restano sul tavolo fino alla giocata seguente.</li>
+        <li>Uscire: quando esaurisci le carte sei fuori per quella mano. La mano finisce quando resta un solo giocatore con le carte.</li>
+        <li>Rango per la mano successiva: l'ordine di uscita decide i posti. Il primo è il Grande Dalmuti, il secondo il Piccolo Dalmuti, l'ultimo il Grande Peone, il penultimo il Piccolo Peone, e tutti gli altri Mercanti.</li>
+        <li>Tasse: il Grande Peone dà le sue due carte migliori (più basse) al Grande Dalmuti, che ne restituisce due a scelta. Il Piccolo Peone e il Piccolo Dalmuti fanno lo stesso con una carta. I Jolly non si consegnano mai: sono le carte peggiori, quindi le carte "migliori" di un Peone sono sempre numeri bassi.</li>
+        <li>Rivoluzione: chi riceve entrambi i Jolly può dichiarare una rivoluzione, annullando le tasse. Se lo dichiara il Grande Peone è una Grande Rivoluzione e tutti cambiano posto (l'ordine si inverte).</li>
+      </ol>
+    </section>
+
+    <section id="bg" class="panel mt-4 p-5">
+      <h2 class="font-display text-lg font-bold text-royal">Български</h2>
+      <ol class="mt-2 list-decimal space-y-2 pl-5 leading-relaxed">
+        <li>Цел: да се отървеш от всичките си карти преди останалите. Колкото по-бързо излизаш, толкова по-висок е рангът ти в следващата ръка.</li>
+        <li>Ред на картите: колкото по-малко е числото, толкова по-силна е картата. Ранг 13 е Джокерът — заместител и най-слабата единична карта. Числото на картата показва колко копия има в тестето (един 1, два 2, ... дванадесет 12).</li>
+        <li>Начало на рунда: когато масата е празна, водещият играе сет — една или повече карти от един и същ ранг. Великият Далмути започва първия рунд. Сам Джокер не може да се играе като начало.</li>
+        <li>Отговор: всеки играч на свой ред трябва да играе същия брой карти с по-силен ранг (по-малко число) или да пасува. Джокер може да замести всяка карта, за да допълни сет: 6 плюс Джокер се играят като двойка 6-ци.</li>
+        <li>Рундът приключва, когато всички останали пасуват. Играчът с последната игра води следващия рунд и картите му остават на масата до следващата игра.</li>
+        <li>Излизане: щом изпразниш ръката си, излизаш за тази ръка. Ръката приключва, когато остане само един играч с карти.</li>
+        <li>Ранг за следващата ръка: редът на излизане определя местата. Първият става Велик Далмути, вторият — Малък Далмути, последният — Голям Селянин, предпоследният — Малък Селянин, а останалите са Търговци.</li>
+        <li>Данъци: Големият Селянин дава двете си най-добри (най-ниски) карти на Великия Далмути, който връща две по свой избор. Малкият Селянин и Малкият Далмути правят същото с една карта. Джокерите никога не се предават — те са най-лошите карти, затова "най-добрите" карти на Селянина са винаги малки числа.</li>
+        <li>Революция: играч, получил и двата Джокера, може да обяви революция и да отмени данъците. Ако го направи Големият Селянин, това е Велика Революция и всички си разменят местата (редът се обръща).</li>
       </ol>
     </section>
 

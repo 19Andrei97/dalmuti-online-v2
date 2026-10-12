@@ -80,6 +80,8 @@ export interface RoomData {
   cur_order_idx: number;
   order: string[] | null;
   last: LastPlay | null;
+  /** Display copy of the table that survives a completed trick (see renderField). */
+  shown: LastPlay | null;
   roles: Record<string, Role> | null;
   socialOrder: string[] | null;
   leaderBoard: LeaderBoardRow[] | null;

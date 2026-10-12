@@ -224,3 +224,54 @@ test("Game.begin places the Greater Dalmuti first regardless of seat numbering",
   game.begin(roomData, ["s1", "s0"]);
   assert.equal(game.cur_order_idx, 5);
 });
+
+test("the player who wins a trick leads the next trick (not the social leader)", () => {
+  const game = new Game();
+  const sockets = { s0: { seat: 0 }, s1: { seat: 1 }, s2: { seat: 2 } };
+  const roomData = { sockets };
+  game.begin(roomData, ["s0", "s1", "s2"]); // s0 (Greater Dalmuti) leads
+
+  game.nextPlayer({ 12: 1 }, "s0", roomData); // s0 leads a 12
+  game.nextPlayer({ 3: 1 }, "s1", roomData); // s1 beats it with a 3
+  game.cur_order[2] = 0; // s2 passes
+  game.nextPlayer({}, null, roomData);
+  game.cur_order[0] = 0; // s0 passes, ending the trick
+  const roundOver = game.nextPlayer({}, null, roomData);
+
+  assert.equal(roundOver, true, "trick is complete");
+  assert.equal(game.cur_order_idx, sockets.s1.seat, "the trick winner (s1) leads");
+  assert.equal(game.last, null, "the rule state is cleared for a new lead");
+  assert.equal(game.shown.by, "s1", "the winning play stays on display");
+});
+
+test("a finished trick keeps its display copy in `shown`", () => {
+  const game = new Game();
+  const roomData = { sockets: { s0: { seat: 0 }, s1: { seat: 1 } } };
+  game.begin(roomData, ["s0", "s1"]);
+  game.nextPlayer({ 7: 2 }, "s0", roomData);
+  assert.deepEqual(game.shown, { num: 7, count: 2, by: "s0", handCount: null });
+
+  game.cur_order[1] = 0;
+  game.nextPlayer({}, null, roomData);
+  assert.equal(game.last, null);
+  assert.equal(game.shown.by, "s0", "shown survives the completed trick");
+  assert.equal(game.shown.num, 7);
+});
+
+test("if the trick winner has gone out, the lead passes clockwise", () => {
+  const game = new Game();
+  const roomData = { sockets: { s0: { seat: 0 }, s1: { seat: 1 }, s2: { seat: 2 } } };
+  game.begin(roomData, ["s0", "s1", "s2"]);
+  game.nextPlayer({ 12: 1 }, "s0", roomData); // s0 (seat 0) leads
+  game.nextPlayer({ 3: 1 }, "s1", roomData); // s1 (seat 1) beats it
+  game.cur_order[2] = 0; // s2 passes
+  game.nextPlayer({}, null, roomData);
+  // s1 empties their hand on that play, so seat 1 leaves the order.
+  game.order[1] = false;
+  game.cur_order[0] = 0; // s0 passes, ending the trick (s1 wins it)
+  const roundOver = game.nextPlayer({}, null, roomData);
+
+  assert.equal(roundOver, true);
+  // Clockwise from the winner's seat (1) is seat 2, not the lowest seat (0).
+  assert.equal(game.cur_order_idx, 2, "lead passes clockwise to the next seated player");
+});
