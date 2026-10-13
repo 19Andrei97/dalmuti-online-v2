@@ -45,6 +45,7 @@ interface Session {
   selection: SelectionModel;
   taxSelection: SelectionModel;
   lastPlayedKey: string | null;
+  fieldCardsKey: string | null;
   handKey: string | null;
   taxKey: string | null;
   autoPassKey: string | null;
@@ -78,6 +79,7 @@ async function boot(): Promise<void> {
     selection: new SelectionModel(),
     taxSelection: new SelectionModel(),
     lastPlayedKey: null,
+    fieldCardsKey: null,
     handKey: null,
     taxKey: null,
     autoPassKey: null,
@@ -646,21 +648,25 @@ function setPlayable(session: Session, data: RoomData): void {
   }
 
   const hint = maybeById("turn-hint");
-  const myTurnOnlyPass =
-    myTurn && data.last && data.last.num ? !hasLegalPlay(data.hand, data.last) : false;
+  const tableEmpty = !(data.last && data.last.num);
+  const onlyPass =
+    myTurn && !tableEmpty && data.last ? !hasLegalPlay(data.hand, data.last) : false;
+  // Leading (empty table) means any cards are legal; say so, so a fresh trick is
+  // never mistaken for a follow that still needs a lower rank.
+  const baseText = tableEmpty ? session.lang.leadNow : session.lang.yourTurn;
   if (hint) {
     show(hint, data.state === GameState.PLAYING && myTurn);
     if (!myTurn) hint.textContent = "";
-    else if (!myTurnOnlyPass) hint.textContent = session.lang.yourTurn;
+    else if (!onlyPass) hint.textContent = baseText;
   }
-  updateAutoPass(session, myTurn, myTurnOnlyPass);
+  updateAutoPass(session, myTurn, onlyPass, baseText);
   if (myTurn) updatePlayButton(session);
 }
 
 // When the player on turn has no legal answer, the server passes them after 5 s.
 // Show a matching countdown so the wait is explained; the client only mirrors the
 // server's decision (it can never pass on its own).
-function updateAutoPass(session: Session, myTurn: boolean, onlyPass: boolean): void {
+function updateAutoPass(session: Session, myTurn: boolean, onlyPass: boolean, baseText: string): void {
   const hint = maybeById("turn-hint");
   const active = myTurn && onlyPass;
   const key = `${active ? 1 : 0}:${session.room ? session.room.cur_order_idx : -1}`;
@@ -676,7 +682,7 @@ function updateAutoPass(session: Session, myTurn: boolean, onlyPass: boolean): v
     hint.classList.toggle("text-gold-light", !active);
   }
   if (!active || !session.room) {
-    if (hint && myTurn) hint.textContent = session.lang.yourTurn;
+    if (hint && myTurn) hint.textContent = baseText;
     return;
   }
 
@@ -917,35 +923,51 @@ function attachCardInput(card: HTMLElement, toggle: (single: boolean) => void): 
 function renderField(session: Session, data: RoomData): void {
   const field = maybeById("field-section");
   const who = maybeById("who-played");
+  const empty = maybeById("field-empty");
   if (!field) return;
 
   // Render from the display copy `shown` (not the rule state `last`): after a
   // trick ends `last` is cleared but `shown` keeps the winning play on the table
   // until someone leads again.
   const last = data.shown;
-  const key = last
-    ? `${last.by}:${last.num}:${last.count}:${last.handCount}:${(last.cards ?? []).join(",")}`
-    : "empty";
-  if (key === session.lastPlayedKey) return;
-  session.lastPlayedKey = key;
+  // The cards flip only when the play changes; the "won the trick" state arrives
+  // as a later refresh (after the winner is known) and must relabel without
+  // replaying the animation.
+  const cardsKey = last ? `${last.by}:${last.num}:${last.count}:${(last.cards ?? []).join(",")}` : "empty";
+  const labelKey = `${cardsKey}:${last ? last.handCount : ""}:${last && last.trickOver ? 1 : 0}`;
+  if (labelKey === session.lastPlayedKey) return;
+  const rebuild = cardsKey !== session.fieldCardsKey;
+  session.lastPlayedKey = labelKey;
+  session.fieldCardsKey = cardsKey;
 
-  clear(field);
-  if (who) {
-    clear(who);
-    who.classList.remove("who-won");
+  if (rebuild) {
+    clear(field);
+    if (who) {
+      clear(who);
+      who.classList.remove("who-won");
+    }
+    if (empty) show(empty, data.state === GameState.PLAYING && (!last || !last.num));
+    if (!last || !last.num) {
+      if (empty) empty.textContent = session.lang.newTrick;
+      return;
+    }
   }
-  if (!last || !last.num) return;
 
-  // A finisher (handCount 0) won the hand; make that unmistakable in place of the
-  // neutral "played:" label that would otherwise sit under their last cards.
+  // A finisher (handCount 0) won the hand; a `trickOver` play won a completed
+  // trick. Both must read differently from the neutral "played:" label so the
+  // next player knows the table is a fresh lead, not a follow.
+  if (!last || !last.num) return;
   const finished = typeof last.handCount === "number" && last.handCount === 0;
   if (who && last.by) {
     const player = data.players[last.by];
     if (player) {
-      who.textContent = `${player.nickname} ${finished ? session.lang.wonHand : session.lang.placed}`;
+      if (finished) who.textContent = `${player.nickname} ${session.lang.wonHand}`;
+      else if (last.trickOver) who.textContent = session.lang.wonTrick.replace("{name}", player.nickname);
+      else who.textContent = `${player.nickname} ${session.lang.placed}`;
     }
   }
-  if (finished) who?.classList.add("who-won");
+  if (who) who.classList.toggle("who-won", finished || !!last.trickOver);
+  if (!rebuild) return;
 
   for (let i = 0; i < last.count; i++) {
     // Show the card actually played: a Joker stays a Joker even when it stood in

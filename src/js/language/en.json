@@ -88,5 +88,8 @@
     "wonHand": "won the hand!",
     "youWonHand": "You won the hand!",
     "taxDue": "Tax due:",
-    "taxPaid": "Tax paid"
+    "taxPaid": "Tax paid",
+    "wonTrick": "{name} won the trick and leads the next one",
+    "leadNow": "You lead now — play any cards.",
+    "newTrick": "New trick"
 }

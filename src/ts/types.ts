@@ -42,6 +42,8 @@ export interface LastPlay {
   handCount?: number;
   /** Exact cards of the play (Jokers kept as 13) so the table shows a Joker. */
   cards?: CardValue[];
+  /** Set on the display copy once this play has won a completed trick. */
+  trickOver?: boolean;
 }
 
 export interface TaxPhase {

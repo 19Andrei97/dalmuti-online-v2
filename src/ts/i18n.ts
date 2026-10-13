@@ -91,6 +91,9 @@ export interface Language {
   youWonHand: string;
   taxDue: string;
   taxPaid: string;
+  wonTrick: string;
+  leadNow: string;
+  newTrick: string;
 }
 
 export type LangCode = "en" | "it" | "bg";

@@ -139,7 +139,10 @@ class RoomManager {
       room.game.nextPlayer({}, null, room);
       this.io.to(room.name).emit("chat announce", "language.autoPassed", "black", me.nickname);
       this.broadcastRoom(room);
-      this.scheduleNextBotTurn(room);
+      // Hand the turn over through the shared path so a *second* human who also
+      // cannot answer is auto-passed too (a plain scheduleNextBotTurn would leave
+      // them stalled forever).
+      this.advanceTurn(room);
     }, this.autoPassDelayMs);
     if (timer.unref) timer.unref();
     this.autoPassTimers.set(room.name, timer);

@@ -88,5 +88,8 @@
     "wonHand": "ha vinto la mano!",
     "youWonHand": "Hai vinto la mano!",
     "taxDue": "Tassa dovuta:",
-    "taxPaid": "Tassa pagata"
+    "taxPaid": "Tassa pagata",
+    "wonTrick": "{name} ha vinto il giro e apre il prossimo",
+    "leadNow": "Tocca a te — gioca qualsiasi carta.",
+    "newTrick": "Nuovo giro"
 }

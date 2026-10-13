@@ -320,12 +320,12 @@ function playingRoom(manager, hands, last) {
 test("a human with no legal play is auto-passed after the grace period", async () => {
   const { io, manager } = makeManager();
   manager.autoPassDelayMs = 20;
-  // A field of a single 1: only a strictly lower rank could answer it, so b's 9
-  // has no move at all.
+  // A field of a single 8: b's 9 cannot answer it, but c's 5 can, so the pass must
+  // move the turn to c and stop there.
   const room = playingRoom(
     manager,
     { a: [1, 2], b: [9], c: [5, 6], d: [7, 8], e: [4, 4] },
-    { num: 1, count: 1, by: "a", handCount: 1, cards: [1] }
+    { num: 8, count: 1, by: "a", handCount: 1, cards: [8] }
   );
 
   manager.scheduleAutoPass(room);
@@ -376,5 +376,48 @@ test("a bot is never auto-passed by the human path", () => {
 
   manager.scheduleAutoPass(room);
   assert.equal(manager.autoPassTimers.has(room.name), false, "bots schedule themselves");
+});
+
+test("auto-pass chains to the next human who also cannot answer", async () => {
+  const { manager } = makeManager();
+  manager.autoPassDelayMs = 20;
+  // Field of a single 5: neither b (9) nor c (7) can answer, but d (3) can, so the
+  // auto-pass must hand off from b to c and then stop on d.
+  const room = playingRoom(
+    manager,
+    { a: [1, 2], b: [9], c: [7], d: [3], e: [4, 4] },
+    { num: 5, count: 1, by: "a", handCount: 1, cards: [5] }
+  );
+
+  manager.scheduleAutoPass(room);
+  await new Promise((r) => setTimeout(r, 120));
+  assert.equal(room.game.cur_order[1], 0, "b was auto-passed");
+  assert.equal(room.game.cur_order[2], 0, "c was auto-passed too (turn handed off)");
+  assert.equal(room.game.cur_order_idx, 3, "the chain stops on d, who can answer");
+});
+
+
+test("a completed trick is flagged trickOver in the view so the client can say 'lead again'", () => {
+  const { manager } = makeManager();
+  const room = setupRoom(manager, ["a", "b", "c"], { a: [1, 5, 5], b: [9, 9], c: [10, 10] });
+  room.game.state = game_state.PLAYING;
+  room.game.cur_order_idx = 0;
+
+  manager.applyPlay(room, "a", { 1: 1 }); // a leads a 1
+  const mid = manager.roomView(room, "b");
+  assert.equal(mid.last.num, 1, "a live field is a follow");
+  assert.equal(mid.shown.trickOver, undefined, "a live play is not a won trick");
+
+  // b and c cannot answer, so the trick completes and returns to a.
+  room.game.cur_order[1] = 0;
+  room.game.nextPlayer({}, null, room);
+  room.game.cur_order[2] = 0;
+  room.game.nextPlayer({}, null, room);
+
+  const after = manager.roomView(room, "a");
+  assert.equal(after.last, null, "the rule state is cleared for a fresh lead");
+  assert.equal(after.shown.num, 1, "the won trick stays on the table");
+  assert.equal(after.shown.trickOver, true, "the display copy marks the won trick");
+  assert.equal(after.cur_order_idx, 0, "the trick winner leads again");
 });
 

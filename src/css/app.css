@@ -1930,6 +1930,9 @@ video {
 .font-semibold {
   font-weight: 600;
 }
+.italic {
+  font-style: italic;
+}
 .leading-none {
   line-height: 1;
 }
@@ -1966,6 +1969,9 @@ video {
 .text-parchment {
   --tw-text-opacity: 1;
   color: rgb(244 241 222 / var(--tw-text-opacity, 1));
+}
+.text-parchment\/60 {
+  color: rgb(244 241 222 / 0.6);
 }
 .text-parchment\/80 {
   color: rgb(244 241 222 / 0.8);

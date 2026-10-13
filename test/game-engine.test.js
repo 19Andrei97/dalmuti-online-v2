@@ -312,6 +312,7 @@ test("the player who wins a trick leads the next trick (not the social leader)",
   assert.equal(game.cur_order_idx, sockets.s1.seat, "the trick winner (s1) leads");
   assert.equal(game.last, null, "the rule state is cleared for a new lead");
   assert.equal(game.shown.by, "s1", "the winning play stays on display");
+  assert.equal(game.shown.trickOver, true, "the display copy is flagged as a won trick");
 });
 
 test("a finished trick keeps its display copy in `shown`", () => {

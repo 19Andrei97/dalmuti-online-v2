@@ -416,8 +416,10 @@ class Game {
     }
     this.last = null;
     // The finished trick is shown, not cleared: the winner's play stays on the
-    // table. When the winner went out (ending the game) handCount is 0, which
-    // the client uses to label them the winner.
+    // table. `trickOver` tells the client this play won a trick, so the next
+    // play is a fresh lead (any cards), not a follow. When the winner went out
+    // (ending the game) handCount is 0, which the client uses to label them the
+    // winner.
     this.shown = winnerSid
       ? {
           num: this.shown ? this.shown.num : null,
@@ -425,6 +427,7 @@ class Game {
           cards: this.shown ? this.shown.cards : null,
           by: winnerSid,
           handCount: winnerOut ? 0 : this.shown ? this.shown.handCount : null,
+          trickOver: true,
         }
       : null;
     // The trick winner leads the next trick. If they went out on that play, the

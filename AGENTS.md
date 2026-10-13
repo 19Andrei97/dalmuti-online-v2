@@ -219,11 +219,18 @@ if they go out).
 - `roomView` exposes both `last` (rule state) and `shown` (display state). The
   client renders the field from `roomData.shown`, not `last`: after a trick ends
   `last` is null but `shown` keeps the winning cards on the table until a new lead.
-  `renderField` keys the rendered play as
-  `${shown.by}:${shown.num}:${shown.count}:${shown.handCount}` and returns early
-  when the key is unchanged — an unrelated room refresh must not rebuild the field,
-  which would restart the flip animation. `whoPlayed` shows the player from
-  `shown.by` (not the current-turn seat), so the label matches the cards on the table.
+  A completed trick sets `shown.trickOver = true`; the client then labels the
+  table "{name} won the trick and leads the next one" (instead of the neutral
+  "played:") and, when the winner is you, `#turn-hint` reads "You lead now — play
+  any cards." — otherwise the leftover cards look like a field you must still
+  beat, which is exactly the confusing bug this fixed. A truly empty table shows
+  the `#field-empty` "New trick" label.
+  `renderField` keys the rendered play by cards
+  (`${shown.by}:${shown.num}:${shown.count}:${cards}`) and the label separately
+  (`+handCount +trickOver`): the label part may change on a later refresh (the
+  winner is known only after the last pass) and must relabel **without** rebuilding
+  the cards, which would restart the flip animation. `whoPlayed` shows the player
+  from `shown.by` (not the current-turn seat), so the label matches the cards.
 - Field cards flip via `.flip-inner` (`rotateY(180deg)` when `.active`). Three traps:
   the entrance animation must **not** target `.flip-inner` at all — an opacity
   keyframe (even opacity-only, with `both` fill) on the 3D-transformed element
