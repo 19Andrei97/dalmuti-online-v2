@@ -44,6 +44,16 @@ function sanitizeChat(raw) {
   return trimmed;
 }
 
+// Target score for a session. A positive whole number, defaulting to 15 and
+// capped so a session cannot be made unwinnable by an absurd value. Any invalid
+// input (missing field from an older client, NaN, a negative number) falls back
+// to the default rather than rejecting the room.
+function sanitizeTargetPoints(raw, fallback = 15, min = 1, max = 500) {
+  const n = Math.floor(Number(raw));
+  if (!Number.isFinite(n) || n < min) return fallback;
+  return Math.min(n, max);
+}
+
 // Fixed-window rate limiter keyed by an arbitrary id (socket id, ip, ...).
 function createRateLimiter({ limit, windowMs }) {
   const hits = new Map();
@@ -64,5 +74,6 @@ module.exports = {
   sanitizeNickname,
   sanitizeRoomName,
   sanitizeChat,
+  sanitizeTargetPoints,
   createRateLimiter,
 };

@@ -94,6 +94,13 @@ export interface Language {
   wonTrick: string;
   leadNow: string;
   newTrick: string;
+  targetPoints: string;
+  targetPointsHint: string;
+  sessionScore: string;
+  sessionWon: string;
+  sessionOver: string;
+  resetSession: string;
+  sessionReset: string;
 }
 
 export type LangCode = "en" | "it" | "bg";

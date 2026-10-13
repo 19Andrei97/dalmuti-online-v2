@@ -92,6 +92,10 @@ export interface RoomData {
   phase: Phase;
   host: string | null;
   canAddBot: boolean;
+  /** Session target score; the first player to reach it wins the session. */
+  targetPoints: number;
+  /** True once someone reached `targetPoints`; hands are frozen until reset. */
+  sessionOver: boolean;
 }
 
 export interface SenderView {

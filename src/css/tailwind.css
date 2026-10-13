@@ -421,6 +421,14 @@
   .hand-finished {
     animation: hand-finished-in 0.35s ease-out both;
   }
+
+  /* Session-over banner. Same hidden-beating pattern as `.hand-finished`. */
+  .session-over:not(.hidden) {
+    display: flex;
+  }
+  .session-over {
+    animation: hand-finished-in 0.35s ease-out both;
+  }
   @keyframes hand-finished-in {
     from { opacity: 0; transform: translateY(-6px); }
     to { opacity: 1; transform: none; }

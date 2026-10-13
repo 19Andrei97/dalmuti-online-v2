@@ -96,6 +96,10 @@
         <input id="no-tax-room" type="checkbox" class="h-4 w-4 accent-royal">
         <span id="no-tax-label">First round: no taxes</span>
       </label>
+      <label id="target-points-label" class="field-label mt-4" for="target-points">Target score:</label>
+      <input id="target-points" class="input" type="number" min="1" max="500" step="1" value="15"
+        inputmode="numeric" autocomplete="off">
+      <p id="target-points-hint" class="mt-1 text-xs text-ink-soft">First to reach this total wins the session.</p>
       <div class="mt-6 flex justify-end">
         <button id="create-room-confirm" type="button" class="btn btn-forest">Create</button>
       </div>

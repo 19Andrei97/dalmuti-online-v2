@@ -8,6 +8,7 @@ const {
   sanitizeNickname,
   sanitizeRoomName,
   sanitizeChat,
+  sanitizeTargetPoints,
   createRateLimiter,
 } = require("./security");
 
@@ -244,6 +245,8 @@ class RoomManager {
       phase: room.phase || null,
       host: room.hostSid || null,
       canAddBot: this.seatedCount(room) < SEATS,
+      targetPoints: room.targetPoints,
+      sessionOver: !!room.sessionOver,
     };
   }
 
@@ -323,7 +326,7 @@ class RoomManager {
       socket.emit("update sender", this.senderView(socket));
     });
 
-    socket.on("create game room", (rawName, hide, noTax) => {
+    socket.on("create game room", (rawName, hide, noTax, rawTargetPoints) => {
       if (!this.ensureAuth(socket)) return;
       if (!this.allowRoom(socket.id)) return this.alert(socket, "language.rateLimited");
       if (this.roomCount() >= MAX_ROOMS) return this.alert(socket, "language.tooManyRooms");
@@ -331,7 +334,8 @@ class RoomManager {
       if (!name) return this.alert(socket, "language.badRoomName");
       this.roomNumber++;
       const idRoom = `${this.roomNumber}-${name}`;
-      this.createRoom(idRoom, !!hide, socket.id, !!noTax);
+      const targetPoints = sanitizeTargetPoints(rawTargetPoints);
+      this.createRoom(idRoom, !!hide, socket.id, !!noTax, targetPoints);
       this.joinRoom(socket, idRoom);
       socket.emit("connectUrl", `/room/${encodeURIComponent(idRoom)}`);
     });
@@ -339,6 +343,7 @@ class RoomManager {
     socket.on("add bot", (difficulty) => this.addBot(socket, difficulty));
     socket.on("fill bots", (difficulty) => this.fillBots(socket, difficulty));
     socket.on("remove bot", (botSid) => this.removeBot(socket, botSid));
+    socket.on("reset session", () => this.resetSession(socket));
 
     socket.on("join game room", (roomId) => {
       if (!this.ensureAuth(socket)) return;
@@ -387,7 +392,7 @@ class RoomManager {
 
   // ---- rooms --------------------------------------------------------------
 
-  createRoom(name, hide, hostSid = null, noTax = false) {
+  createRoom(name, hide, hostSid = null, noTax = false, targetPoints = 15) {
     const room = {
       name,
       hide,
@@ -401,6 +406,10 @@ class RoomManager {
       // House rule: skip the very first taxation, so the first hand has no
       // Dalmuti/Peon seats (blank heraldry) and play starts immediately.
       noTaxFirstRound: !!noTax,
+      // Session scoring: points earned each hand accumulate until a player
+      // reaches this target. The room (and its scores) survives across hands.
+      targetPoints,
+      sessionOver: false,
       createdAt: Date.now(),
     };
     (hide ? this.rooms.hide : this.rooms.open)[name] = room;
@@ -541,6 +550,9 @@ class RoomManager {
   // starts the game - the host readies up when the table is set.
   maybeAutoStart(room) {
     if (room.game.state !== game_state.WAITING || room.phase) return;
+    // A finished session stays frozen until the host resets it, so a player who
+    // was already ready cannot silently start a new hand past the target.
+    if (room.sessionOver) return;
     if (this.humanSeatedCount(room) < 1) return;
     if (this.seatedCount(room) < 2) return;
     if (this.readyCount(room) !== this.seatedCount(room)) return;
@@ -1049,6 +1061,16 @@ class RoomManager {
       role: engine.roleOf(roles, sid),
     }));
 
+    // Session scoring: this hand's points add to each player's running total,
+    // which is carried across hands (unlike the per-hand `leaderBoard`).
+    let reached = false;
+    for (const row of room.leaderBoard) {
+      const p = room.sockets[row.sid];
+      if (!p) continue;
+      p.points += row.points;
+      if (p.points >= room.targetPoints) reached = true;
+    }
+
     this.io.to(room.name).emit("chat announce", "language.ended", "red");
     this.clearBotTimers(room);
     this.clearAutoPassTimer(room);
@@ -1057,8 +1079,43 @@ class RoomManager {
     // Bots never send a ready event, so re-arm them for the next hand.
     for (const p of this.botsIn(room)) p.ready = true;
     room.phase = null;
+
+    // A session ends the moment someone reaches the target. Freeze further hands
+    // (maybeAutoStart is gated on `sessionOver`) until the host restarts or the
+    // scores are cleared, so the final totals cannot change under the players.
+    if (reached && !room.sessionOver) {
+      room.sessionOver = true;
+      const champion = Object.values(room.sockets)
+        .filter((p) => !p.spectator)
+        .sort((a, b) => b.points - a.points)[0];
+      if (champion) {
+        this.io.to(room.name).emit(
+          "chat announce",
+          "language.sessionWon",
+          "gold",
+          champion.nickname
+        );
+      }
+    }
+
     this.broadcastRoom(room);
     this.broadcastLobby();
+  }
+
+  // Host-only: clear every score and start a fresh session in the same room.
+  resetSession(socket) {
+    if (!this.ensureAuth(socket)) return;
+    const entry = this.roomEntry(socket.userData.cur_room);
+    if (!entry) return;
+    const { room } = entry;
+    if (room.hostSid !== socket.id) return this.alert(socket, "language.notHost");
+    if (room.game.state !== game_state.WAITING || room.phase) {
+      return this.alert(socket, "language.botNotNow");
+    }
+    for (const p of this.players(room)) p.points = 0;
+    room.sessionOver = false;
+    this.io.to(room.name).emit("chat announce", "language.sessionReset", "blue");
+    this.broadcastRoom(room);
   }
 }
 

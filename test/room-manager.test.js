@@ -307,6 +307,42 @@ test("a full game: taxes are player-chosen, play works, game finishes", async ()
   }
 });
 
+test("a room created with a target score carries it and can end a session", async () => {
+  const ctx = await startServer();
+  try {
+    const a = await connect(ctx.port);
+    const b = await connect(ctx.port);
+    await delay(50);
+    a.emit("set new nickname", "Alice", "");
+    b.emit("set new nickname", "Bob", "");
+    // 5th argument is the session target (default 15).
+    a.emit("create game room", "Session", false, false, 4);
+    await delay(50);
+    const roomName = Object.keys(ctx.server.manager.rooms.open)[0];
+    b.emit("join game room", roomName);
+    await delay(50);
+
+    const room = ctx.server.manager.rooms.open[roomName];
+    assert.equal(room.targetPoints, 4, "target stored on the room");
+    const view = ctx.server.manager.roomView(room, a.id);
+    assert.equal(view.targetPoints, 4, "target exposed in the room view");
+    assert.equal(view.sessionOver, false);
+
+    // Force a finished hand and assert the session ends (4 seats, target 4:
+    // the winner of a two-player hand scores 2, so seed one player at 3 first).
+    room.sockets[a.id].points = 3;
+    room.finishedOrder = [a.id, b.id];
+    ctx.server.manager.finishGame(room);
+    assert.equal(room.sessionOver, true, "a player reached the target");
+    assert.equal(ctx.server.manager.roomView(room, a.id).sessionOver, true);
+
+    a.close();
+    b.close();
+  } finally {
+    await ctx.stop();
+  }
+});
+
 test("passing on an empty field is rejected server-side", async () => {
   const ctx = await startServer();
   try {

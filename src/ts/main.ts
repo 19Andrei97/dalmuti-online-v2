@@ -15,7 +15,7 @@ import { applyLanguageUI, wireLanguageMenu } from "./lang-menu";
 import { connect, type TypedSocket } from "./socket";
 import { SelectionModel } from "./selection";
 import { classifyMove, fieldCount, hasLegalPlay, playableRanks } from "./client-rules";
-import { GameState, JOKER, type AuthInfo, type LobbyView, type RoomData, type Role } from "./types";
+import { GameState, JOKER, type AuthInfo, type LobbyView, type PlayerView, type RoomData, type Role } from "./types";
 
 // Must match the server's autoPassDelayMs so the visible countdown lines up.
 const AUTO_PASS_MS = 5000;
@@ -113,6 +113,9 @@ function applyStaticTranslations(lang: Language): void {
     "join-room-label": lang.newRoomName,
     "hide-label": lang.hide,
     "no-tax-label": lang.noTaxFirst,
+    "target-points-label": lang.targetPoints,
+    "target-points-hint": lang.targetPointsHint,
+    "reset-session-btn": lang.resetSession,
     "create-room-confirm": lang.btnCreate,
     "nickname-title": lang.titleNickModal,
     "nickname-label": lang.setNickname,
@@ -351,10 +354,12 @@ function submitCreateRoom(session: Session): void {
   const name = field?.value.trim() || generateRoomName();
   const hide = maybeById<HTMLInputElement>("hide-room")?.checked ?? false;
   const noTax = maybeById<HTMLInputElement>("no-tax-room")?.checked ?? false;
+  const targetRaw = Number(maybeById<HTMLInputElement>("target-points")?.value);
+  const targetPoints = Number.isFinite(targetRaw) && targetRaw >= 1 ? Math.floor(targetRaw) : 15;
 
   clearChat();
   showLoading(session);
-  session.socket.emit("create game room", name, hide, noTax);
+  session.socket.emit("create game room", name, hide, noTax, targetPoints);
   if (field) field.value = "";
   closeDialog(byId("dlg-create"));
 }
@@ -383,6 +388,7 @@ function wireRoom(session: Session): void {
   });
 
   maybeById("add-bot-btn")?.addEventListener("click", () => openDialog(byId("dlg-add-bot")));
+  maybeById("reset-session-btn")?.addEventListener("click", () => session.socket.emit("reset session"));
   maybeById("share-btn")?.addEventListener("click", () => openDialog(byId("dlg-share")));
   maybeById("dlg-add-bot-close")?.addEventListener("click", () => closeDialog(byId("dlg-add-bot")));
   maybeById("add-bot-confirm")?.addEventListener("click", () => {
@@ -610,8 +616,9 @@ function renderRoom(session: Session, data: RoomData): void {
   renderHand(session, data);
   renderField(session, data);
   renderHandFinished(session, data);
+  renderSessionOver(session, data);
   setPlayable(session, data);
-  renderLeaderboard(data);
+  renderLeaderboard(session, data);
 
   const panel = maybeById("tax-panel");
   if (data.phase && data.phase.type === "tax" && panel && !panel.classList.contains("hidden")) {
@@ -999,6 +1006,44 @@ function renderHandFinished(session: Session, data: RoomData): void {
   show(banner, out && data.state === GameState.PLAYING);
 }
 
+/* ---- session score ----------------------------------------------------- */
+
+// Shown once a player reaches the session target. The host can clear the scores
+// and start a fresh session; the room keeps its seats, hands are frozen meanwhile.
+function renderSessionOver(session: Session, data: RoomData): void {
+  const banner = maybeById("session-over");
+  if (!banner) return;
+  const isHost = data.you === data.host;
+  const winner = data.sessionOver ? topScorer(data) : null;
+  const text =
+    winner && winner.nickname
+      ? `${winner.nickname} ${session.lang.sessionWon}`
+      : session.lang.sessionOver;
+  setText(maybeById("session-over-text") ?? document.createElement("span"), text);
+  show(banner, data.sessionOver);
+  const resetBtn = maybeById("reset-session-btn");
+  if (resetBtn) show(resetBtn, data.sessionOver && isHost);
+}
+
+function topScorer(data: RoomData): PlayerView | null {
+  let best: PlayerView | null = null;
+  for (const p of Object.values(data.players)) {
+    if (p.spectator) continue;
+    if (!best || p.points > best.points) best = p;
+  }
+  return best;
+}
+
+// The scoreboard subtitle names the running target, e.g. "Session score
+// (target 15)". Falls back to the plain label when the room has no target.
+function sessionScoreTitle(lang: Language, data: RoomData): string {
+  const label = lang.sessionScore;
+  if (!data.targetPoints) return label;
+  return label.includes("{target}")
+    ? label.replace("{target}", String(data.targetPoints))
+    : `${label} · ${data.targetPoints}`;
+}
+
 /* ---- tax --------------------------------------------------------------- */
 
 function renderTaxCards(session: Session, count: number): void {
@@ -1058,13 +1103,37 @@ function paintTaxSelection(session: Session, nodes: Map<number, HTMLElement[]>):
 
 /* ---- leaderboard ------------------------------------------------------- */
 
-function renderLeaderboard(data: RoomData): void {
+function renderLeaderboard(session: Session, data: RoomData): void {
   const stats = maybeById("statistics");
   if (!stats) return;
   clear(stats);
-  if (!data.leaderBoard) return;
 
-  for (const row of data.leaderBoard) {
+  const title = maybeById("session-score-title");
+  if (title) title.textContent = sessionScoreTitle(session.lang, data);
+
+  // One row per seated player, ranked by running session total. After a hand the
+  // leaderboard is authoritative (finishing order + roles); during a hand we
+  // fall back to the live players so the totals stay visible as they grow.
+  type Row = { sid: string; nickname: string; role: Role | null; total: number };
+  let rows: Row[];
+  if (data.leaderBoard) {
+    rows = data.leaderBoard.map((r) => {
+      const p = data.players[r.sid];
+      return { sid: r.sid, nickname: r.nickname, role: r.role, total: p ? p.points : r.points };
+    });
+  } else {
+    rows = Object.entries(data.players)
+      .filter(([, p]) => !p.spectator)
+      .map(([sid, p]) => ({
+        sid,
+        nickname: p.nickname,
+        role: p.role ?? (data.roles ? data.roles[sid] ?? null : null),
+        total: p.points,
+      }));
+  }
+  rows.sort((a, b) => b.total - a.total);
+
+  for (const row of rows) {
     const size =
       row.role === "greaterDalmuti"
         ? "text-xl text-gold-dark"
@@ -1073,9 +1142,16 @@ function renderLeaderboard(data: RoomData): void {
           : row.role === "lesserPeon" || row.role === "greaterPeon"
             ? "text-sm"
             : "text-base";
-    stats.appendChild(el("div", { class: `w-full font-bold ${size}`, text: `${row.nickname}: ${row.points}` }));
+    stats.appendChild(
+      el("div", {
+        class: `w-full font-bold ${size}`,
+        text: `${row.nickname}: ${row.total} / ${data.targetPoints}`,
+      })
+    );
+    // Role heraldry is painted only between hands (renderSlots owns it during
+    // play); it marks the seats the finished hand just assigned.
     const seat = seatOf(data, row.sid);
-    if (seat != null && row.role) setRoleArt(seat, row.role);
+    if (seat != null && row.role && data.state === GameState.WAITING) setRoleArt(seat, row.role);
   }
 }
 

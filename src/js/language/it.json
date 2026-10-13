@@ -30,7 +30,7 @@
     "passed": "passa.",
     "autoPassed": "Passo automatico (nessuna carta giocabile).",
     "finished": "ha finito le carte!",
-    "ended": "Il gioco si è concluso perché è rimasto un solo giocatore!",
+    "ended": "La mano è finita — è rimasto un solo giocatore con le carte!",
     "disconnected": " disconnesso",
     "connected": " connesso",
     "write": "Scrivi un messaggio...",
@@ -91,5 +91,12 @@
     "taxPaid": "Tassa pagata",
     "wonTrick": "{name} ha vinto il giro e apre il prossimo",
     "leadNow": "Tocca a te — gioca qualsiasi carta.",
-    "newTrick": "Nuovo giro"
+    "newTrick": "Nuovo giro",
+    "targetPoints": "Punteggio obiettivo:",
+    "targetPointsHint": "Il primo a raggiungere questo totale vince la sessione.",
+    "sessionScore": "Punteggio sessione (obiettivo {target})",
+    "sessionWon": "ha raggiunto l'obiettivo e vinto la sessione!",
+    "sessionOver": "Sessione finita — l'host può azzerare i punteggi.",
+    "resetSession": "Azzera punteggi",
+    "sessionReset": "I punteggi della sessione sono stati azzerati."
 }

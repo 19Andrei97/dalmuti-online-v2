@@ -41,8 +41,20 @@ test("no translation is empty and placeholders match the English source", () => 
 });
 
 test("keys the client builds at runtime exist in every language", () => {
-  // These are referenced by src/ts/main.ts (wonTrick uses a {name} placeholder).
-  const required = ["wonTrick", "leadNow", "newTrick", "wonHand", "youWonHand", "autoPassIn"];
+  // These are referenced by src/ts/main.ts (wonTrick and sessionScore use a
+  // {name}/{target} placeholder).
+  const required = [
+    "wonTrick",
+    "leadNow",
+    "newTrick",
+    "wonHand",
+    "youWonHand",
+    "autoPassIn",
+    "sessionScore",
+    "sessionWon",
+    "sessionOver",
+    "resetSession",
+  ];
   for (const lang of LANGS) {
     const dict = load(lang);
     for (const key of required) assert.ok(dict[key], `${lang} is missing ${key}`);

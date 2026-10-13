@@ -29,8 +29,8 @@
     "started": "The game has started.",
     "passed": "passed.",
     "autoPassed": "Auto-passed (no playable card).",
-    "finished": "finished the cards!",
-    "ended": "The game has ended due to only one player remaining!",
+    "finished": "finished their cards!",
+    "ended": "The hand is over — only one player still has cards!",
     "disconnected": " disconnected",
     "connected": " connected",
     "write": "Write a message...",
@@ -91,5 +91,12 @@
     "taxPaid": "Tax paid",
     "wonTrick": "{name} won the trick and leads the next one",
     "leadNow": "You lead now — play any cards.",
-    "newTrick": "New trick"
+    "newTrick": "New trick",
+    "targetPoints": "Target score:",
+    "targetPointsHint": "First to reach this total wins the session.",
+    "sessionScore": "Session score (target {target})",
+    "sessionWon": "reached the target and won the session!",
+    "sessionOver": "Session over — the host can reset the scores.",
+    "resetSession": "Reset scores",
+    "sessionReset": "Session scores were reset."
 }
