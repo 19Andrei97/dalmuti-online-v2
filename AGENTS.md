@@ -176,10 +176,25 @@ if they go out).
   (e.g. four Peasants), and the Jokers are wild — each Joker played alongside
   other cards takes on that rank, so `{9:3, 13:1}` is a legal set of four 9s.
   `checkRule` enforces this by counting *distinct ranks*, not cards: at most two
-  distinct ranks, and if there are two then one must be the Joker. Jokers alone
-  count as a 13 and can never be led or used to beat a field.
+  distinct ranks, and if there are two then one must be the Joker. A lone Joker
+  is a rank-13 set, so it can be *led* (the weakest lead) but never beats a
+  field (it counts as a 13).
 - "First-deal revolution" (an official optional variant) is not implemented.
 - The trick winner leads the next trick (see *Last play / field rendering*).
+
+## Session scoring
+
+- A room carries a `targetPoints` (default 15, sanitised to 1..500 by
+  `sanitizeTargetPoints`). `finishGame` awards each player `total - rankIndex`
+  points for the hand (last place 1, each better place one more) and adds them to
+  the running `Player.points`; `room.leaderBoard` stays per-hand only.
+- The first player to reach `targetPoints` flips `room.sessionOver`, which
+  `maybeAutoStart` checks so no further hand starts until the host resets.
+  `resetSession` (host-only, `WAITING` only) zeroes `points`, clears
+  `sessionOver` and announces `language.sessionReset`.
+- `roomView` exposes `targetPoints` and `sessionOver`; the client renders a
+  session-over banner (`#session-over`), a host-only reset button and a
+  scoreboard that shows `points / targetPoints` per player.
 
 ## Bots
 
