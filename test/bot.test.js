@@ -14,24 +14,29 @@ test("enumeratePlays only returns legal plays for the current field", () => {
   for (const play of leads) assert.equal(engine.checkRule(null, play), true, JSON.stringify(play));
   assert.ok(leads.some((p) => p[3] === 2), "double 3 available");
   assert.ok(
-    !leads.some((p) => p[JOKER] === 1),
+    !leads.some((p) => p[JOKER] === 1 && Object.keys(p).length === 1),
     "a lone Joker is not offered while a real card can lead"
   );
+  // A Joker standing in for a rank (a wild) is still offered while leading.
+  assert.ok(leads.some((p) => p[3] === 2 && p[JOKER] === 1), "a Joker can wild a set");
   // When only Jokers remain, the lone-Joker lead is the only legal option.
   assert.ok(
     bot.enumeratePlays([13], null).some((p) => p[JOKER] === 1),
     "a lone Joker is led when nothing else can be"
   );
 
-  // Following a double: only doubles / card+Joker combos that beat it.
-  const following = bot.enumeratePlays(hand, { num: 4, count: 2 });
+  // Following a double: the best (fewest-wild) set for each rank that beats it.
+  const following = bot.enumeratePlays(hand, { num: 6, count: 2 });
   assert.ok(following.length > 0);
   for (const play of following) {
-    assert.equal(engine.checkRule({ num: 4, count: 2 }, play), true, JSON.stringify(play));
+    assert.equal(engine.checkRule({ num: 6, count: 2 }, play), true, JSON.stringify(play));
     assert.equal(engine.selectionCount(play), 2);
   }
-  assert.ok(following.some((p) => p[3] === 2));
-  assert.ok(following.some((p) => p[3] === 1 && p[JOKER] === 1));
+  assert.ok(following.some((p) => p[3] === 2), "a plain pair of 3s beats a pair of 6s");
+  // Holding only one 5, the Joker fills out the pair rather than being wasted on
+  // a rank the bot already holds two of.
+  assert.ok(following.some((p) => p[5] === 1 && p[JOKER] === 1), "5 + Joker pair");
+  assert.ok(!following.some((p) => p[3] === 1 && p[JOKER] === 1), "no needless wild");
 });
 
 test("a bot with nothing that can beat the field passes", () => {
@@ -55,6 +60,40 @@ test("hard bots spend the Joker when it is the only way to follow", () => {
   assert.deepEqual(play, { 3: 1, [JOKER]: 1 });
 });
 
+test("enumeratePlays offers full set leads and every legal follow size", () => {
+  // Leading with four 9s: every set size 1..4 is a legal lead.
+  const leads = bot.enumeratePlays([9, 9, 9, 9], null);
+  for (let n = 1; n <= 4; n++) assert.ok(leads.some((p) => p[9] === n), `lead of ${n}`);
+  // Following a three-card field: a three-card set is now offered. This used to
+  // be impossible - the bot could never answer a 3+ card field.
+  const follows = bot.enumeratePlays([4, 4, 4, 7], { num: 6, count: 3 });
+  assert.ok(follows.some((p) => p[4] === 3));
+  for (const play of follows) {
+    assert.equal(engine.checkRule({ num: 6, count: 3 }, play), true, JSON.stringify(play));
+    assert.equal(engine.selectionCount(play), 3);
+  }
+});
+
+test("hard bots answer a three-card field instead of passing", () => {
+  const play = bot.choosePlay([4, 4, 4, 7], { num: 6, count: 3 }, bot.DIFFICULTY.HARD);
+  assert.deepEqual(play, { 4: 3 });
+});
+
+test("hard bots dump their biggest set when they hold the lead", () => {
+  // Four 9s go out in a single lead; nothing else is close.
+  const hand = [2, 2, 9, 9, 9, 9];
+  const play = bot.choosePlay(hand, null, bot.DIFFICULTY.HARD);
+  assert.deepEqual(play, { 9: 4 });
+});
+
+test("hard bots lead their biggest set rather than a lone low card", () => {
+  // The low single (2) can still win a trick later; the big high set is the
+  // right lead because it sheds the most and is hardest to beat.
+  const hand = [2, 8, 8, 8];
+  const play = bot.choosePlay(hand, null, bot.DIFFICULTY.HARD);
+  assert.deepEqual(play, { 8: 3 });
+});
+
 test("bots lead a lone Joker only when nothing better can be led", () => {
   // A hand of only Jokers must lead one (the rules allow it).
   assert.deepEqual(
@@ -62,9 +101,9 @@ test("bots lead a lone Joker only when nothing better can be led", () => {
     { [JOKER]: 1 }
   );
   // With a real card available, the Joker is kept back.
-  const hand = [4, JOKER];
+  const hand = [4, 4, 4, 9, JOKER];
   const play = bot.choosePlay(hand, null, bot.DIFFICULTY.HARD);
-  assert.deepEqual(play, { 4: 1 }, "the Joker is not wasted on a lead");
+  assert.deepEqual(play, { 4: 3 }, "the Joker is not wasted on a lead");
 });
 
 test("medium bots shed their highest cards", () => {

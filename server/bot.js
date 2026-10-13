@@ -34,23 +34,37 @@ function containsJoker(selection) {
 // Every legal play available to `hand` against the field `last` (or when
 // leading, when last is null), as {card: count} maps. Candidates are filtered
 // through the engine's rule check so the list can never contain an illegal play.
+//
+// A set may hold any number of copies of a single rank, and each Joker played
+// beside a real rank stands in for it, so both leading and following enumerate
+// every set size (a 4-of-a-kind lead or a 3-card follow are real options, not
+// just singles and pairs).
 function enumeratePlays(hand, last) {
   const counts = engine.handToCounts(hand);
   const unique = Object.keys(counts).map(Number).sort((a, b) => a - b);
+  const jokers = counts[engine.JOKER] || 0;
   const candidates = [];
 
   if (!last) {
-    for (const card of unique) candidates.push({ [card]: 1 });
-    for (const card of unique) if (counts[card] >= 2) candidates.push({ [card]: 2 });
-  } else if (last.count === 1) {
-    for (const card of unique) candidates.push({ [card]: 1 });
-  } else if (last.count === 2) {
-    for (const card of unique) if (counts[card] >= 2) candidates.push({ [card]: 2 });
-    if (counts[engine.JOKER] >= 1) {
-      for (const card of unique) {
-        if (card !== engine.JOKER) candidates.push({ [card]: 1, [engine.JOKER]: 1 });
+    for (const card of unique) {
+      if (card === engine.JOKER) continue;
+      // A run of 1..all copies of the rank, optionally enlarged with wilds.
+      for (let n = 1; n <= counts[card]; n++) candidates.push({ [card]: n });
+      for (let w = 1; w <= jokers; w++) {
+        candidates.push({ [card]: counts[card], [engine.JOKER]: w });
       }
     }
+    // A lone Joker is a rank-13 lead; a Joker pair is a rank-13 pair.
+    for (let n = 1; n <= jokers; n++) candidates.push({ [engine.JOKER]: n });
+  } else {
+    const n = last.count;
+    for (const card of unique) {
+      if (card === engine.JOKER) continue;
+      const need = n - counts[card];
+      if (need <= 0) candidates.push({ [card]: n });
+      else if (jokers >= need) candidates.push({ [card]: counts[card], [engine.JOKER]: need });
+    }
+    if (jokers >= n) candidates.push({ [engine.JOKER]: n });
   }
 
   const plays = candidates.filter((sel) => engine.checkRule(last, sel));
@@ -68,6 +82,19 @@ function chooseRandom(plays, rng) {
   return plays[Math.min(idx, plays.length - 1)];
 }
 
+function bestByScore(plays, score) {
+  let best = plays[0];
+  let bestScore = score(best);
+  for (const play of plays) {
+    const s = score(play);
+    if (s > bestScore) {
+      best = play;
+      bestScore = s;
+    }
+  }
+  return best;
+}
+
 // Easy: plays at random and may waste strong cards or Jokers.
 function chooseEasy(hand, last, rng) {
   const plays = enumeratePlays(hand, last);
@@ -75,34 +102,33 @@ function chooseEasy(hand, last, rng) {
   return chooseRandom(plays, rng);
 }
 
-// Medium: sheds the most valuable (worst) cards it legally can, but does not
-// plan ahead - it may spend a Joker to dump a high card.
+// Medium: sheds as many cards as it legally can, preferring the worst (highest)
+// ones, but does not plan ahead - it may spend a Joker to dump a high card.
 function chooseMedium(hand, last) {
   const plays = enumeratePlays(hand, last);
   if (!plays.length) return null;
-  let best = plays[0];
-  for (const play of plays) {
-    if (selectionValue(play) > selectionValue(best)) best = play;
-  }
-  return best;
+  const score = (play) => selectionValue(play) + selectionCards(play).length * 40;
+  return bestByScore(plays, score);
 }
 
-// Hard: wins when it can, otherwise preserves Jokers (its only wildcards) and
-// sheds the worst legal cards.
+// Hard: the researched strategy. It wins the hand when it can, dumps as many of
+// its worst (highest) cards as possible, prefers the biggest set it can play
+// (which both sheds more and is harder to beat, keeping the lead), and treats a
+// Joker as too valuable to spend unless that is the only legal way to follow.
 function chooseHard(hand, last) {
   const plays = enumeratePlays(hand, last);
   if (!plays.length) return null;
+
   const score = (play) => {
-    let s = selectionValue(play);
-    if (selectionCards(play).length === hand.length) s += 10000;
-    if (containsJoker(play)) s -= 500;
+    const n = selectionCards(play).length;
+    let s = selectionValue(play); // shed the worst cards first
+    s += n * 60; // and shed as many as possible
+    if (n === hand.length) s += 100000; // going out wins the hand
+    if (containsJoker(play)) s -= 1000; // wilds are far too valuable to spend
     return s;
   };
-  let best = plays[0];
-  for (const play of plays) {
-    if (score(play) > score(best)) best = play;
-  }
-  return best;
+
+  return bestByScore(plays, score);
 }
 
 // Pick a move for the given difficulty. Returns a selection map or null (pass).

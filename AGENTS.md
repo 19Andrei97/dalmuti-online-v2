@@ -214,6 +214,17 @@ if they go out).
   another human if the host leaves.
 - `roomView` exposes `isBot`/`difficulty` per player (bots show `handCount`
   only, like everyone else) plus `host` and `canAddBot` for the host's UI.
+- Play strategy (`server/bot.js`, the researched approach): `enumeratePlays`
+  enumerates every legal set size — leading offers 1..all copies of each rank
+  (plus Joker-widened sets), and following offers the fewest-wild set of each
+  lower rank that matches the field's count, so a bot can answer 3+ card fields
+  and dump a whole run of a rank. `easy` picks at random, `medium` sheds the most
+  cards (highest value, more cards), and `hard` adds a large Joker penalty so a
+  wild is spent only when it is the sole way to follow (or when the play goes
+  out), which measured ~32% vs ~23% for the old greedy-only hard bot in a
+  four-player field. Pass-to-save tactics (holding low cards for later) were
+  simulated too and consistently underperformed greedy shedding, so they are not
+  used.
 - When the human whose turn it is leaves mid-hand, `removeFromRoom` keeps the
   room alive (a human remains) and calls `scheduleNextBotTurn`, so a bot still
   advances the turn instead of the hand stalling.
