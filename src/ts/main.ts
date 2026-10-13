@@ -933,6 +933,22 @@ function renderField(session: Session, data: RoomData): void {
   const empty = maybeById("field-empty");
   if (!field) return;
 
+  // The table only shows cards while a hand is actually being played. Between
+  // hands (waiting for ready, revolution/tax phase) it must be empty, so clear
+  // it and drop the cached keys. Without this the last play of a finished hand
+  // could linger in the middle of the table until someone leads the next hand.
+  if (data.state !== GameState.PLAYING) {
+    clear(field);
+    if (who) {
+      clear(who);
+      who.classList.remove("who-won");
+    }
+    if (empty) show(empty, false);
+    session.fieldCardsKey = null;
+    session.lastPlayedKey = null;
+    return;
+  }
+
   // Render from the display copy `shown` (not the rule state `last`): after a
   // trick ends `last` is cleared but `shown` keeps the winning play on the table
   // until someone leads again.
