@@ -120,6 +120,26 @@ function checkRule(last, selection) {
   return true;
 }
 
+// True when `hand` holds at least one legal answer to the field `last`. Mirrors
+// the client's hasLegalPlay: a set of `last.count` copies of a lower rank, or the
+// {Joker, lower rank} pair for a two-card field. A null field (leading) is always
+// playable — the leader must play. Used to auto-pass a player who has no move.
+function hasLegalPlay(hand, last) {
+  if (!last) return true;
+  const counts = handToCounts(hand);
+  for (const [card, have] of Object.entries(counts)) {
+    const rank = Number(card);
+    if (rank !== JOKER && rank < last.num && have >= last.count) return true;
+  }
+  if (last.count === 2 && (counts[JOKER] || 0) >= 1) {
+    for (const [card, have] of Object.entries(counts)) {
+      const rank = Number(card);
+      if (rank !== JOKER && rank < last.num && have >= 1) return true;
+    }
+  }
+  return false;
+}
+
 // Remove the selected cards from a hand, returning a new numeric hand.
 function applyPlay(hand, selection) {
   const counts = handToCounts(hand);
@@ -450,6 +470,7 @@ module.exports = {
   checkValidity,
   selectionCount,
   checkRule,
+  hasLegalPlay,
   applyPlay,
   cardsFromSelection,
   computeRoles,

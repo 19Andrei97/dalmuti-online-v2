@@ -27,7 +27,11 @@ class RoomManager {
     this.tokens = new Map(); // reconnect token -> { room, sid }
     this.timers = new Map(); // room name -> active phase timer
     this.botTimers = new Map(); // room name -> pending bot action timer
+    this.autoPassTimers = new Map(); // room name -> pending human auto-pass timer
     this.botDelayMs = opts.botDelayMs != null ? opts.botDelayMs : 700;
+    // A human who cannot answer the field is passed automatically after this
+    // delay, so nobody can stall a hand by refusing to press Pass.
+    this.autoPassDelayMs = opts.autoPassDelayMs != null ? opts.autoPassDelayMs : 5000;
     this.taxWindowMs = opts.taxWindowMs != null ? opts.taxWindowMs : 20000;
     this.revolutionWindowMs =
       opts.revolutionWindowMs != null ? opts.revolutionWindowMs : 15000;
@@ -100,6 +104,47 @@ class RoomManager {
     }
   }
 
+  clearAutoPassTimer(room) {
+    const t = this.autoPassTimers.get(room.name);
+    if (t) {
+      clearTimeout(t);
+      this.autoPassTimers.delete(room.name);
+    }
+  }
+
+  // Pass a human who has no legal answer to the field once the grace period runs
+  // out. Re-checks that it is still their turn and still unanswerable, so a play
+  // that arrived in the meantime simply wins the race. Bots schedule themselves.
+  scheduleAutoPass(room) {
+    this.clearAutoPassTimer(room);
+    if (room.game.state !== game_state.PLAYING || room.phase) return;
+    const idx = room.game.cur_order_idx;
+    const entry = Object.entries(room.sockets).find(
+      ([, p]) => !p.isBot && p.seat === idx
+    );
+    if (!entry) return;
+    const [sid, me] = entry;
+    // Only a player who genuinely cannot answer is auto-passed; anyone with a
+    // legal play keeps their full turn. Leading is always playable, so this only
+    // fires when a field is on the table.
+    if (!room.game.last || engine.hasLegalPlay(me.hand, room.game.last)) return;
+
+    const timer = setTimeout(() => {
+      this.autoPassTimers.delete(room.name);
+      if (room.game.state !== game_state.PLAYING || room.phase) return;
+      if (room.game.cur_order_idx !== me.seat) return;
+      if (!room.sockets[sid] || room.sockets[sid] !== me) return;
+      if (engine.hasLegalPlay(me.hand, room.game.last)) return;
+      room.game.cur_order[me.seat] = 0;
+      room.game.nextPlayer({}, null, room);
+      this.io.to(room.name).emit("chat announce", "language.autoPassed", "black", me.nickname);
+      this.broadcastRoom(room);
+      this.scheduleNextBotTurn(room);
+    }, this.autoPassDelayMs);
+    if (timer.unref) timer.unref();
+    this.autoPassTimers.set(room.name, timer);
+  }
+
   // Decide what the bot currently on turn should do, then apply it exactly as a
   // client play would.
   runBotTurn(room) {
@@ -123,7 +168,7 @@ class RoomManager {
     } else {
       this.applyPlay(room, sid, selection);
     }
-    this.scheduleNextBotTurn(room);
+    this.advanceTurn(room);
   }
 
   // Queue a bot turn if the player now on turn is a bot (single-shot per room).
@@ -134,6 +179,14 @@ class RoomManager {
     const isBot = Object.values(room.sockets).some((p) => p.isBot && p.seat === idx);
     if (!isBot) return;
     this.scheduleBot(room, () => this.runBotTurn(room));
+  }
+
+  // Hand the turn over: a bot acts on its own timer, a human who cannot answer
+  // the field is auto-passed after the grace period. Every turn transition goes
+  // through here so the two paths can never both fire for the same turn.
+  advanceTurn(room) {
+    this.scheduleNextBotTurn(room);
+    this.scheduleAutoPass(room);
   }
 
   // Public lobby view of a room (no hands). Private rooms live in a separate
@@ -513,7 +566,7 @@ class RoomManager {
       room.game.updateOrder(seat);
       if (room.game.cur_order_idx === seat) room.game.nextPlayer({}, null, room);
       if (room.game.isOneLeft()) this.finishGame(room);
-      else this.scheduleNextBotTurn(room);
+      else this.advanceTurn(room);
     }
 
     // Bots cannot exist without a human host, so drop the whole room (bots
@@ -523,6 +576,7 @@ class RoomManager {
       delete store[room.name];
       this.clearPhase(room);
       this.clearBotTimers(room);
+      this.clearAutoPassTimer(room);
       return;
     }
     // Hand the host role to another human if the host left.
@@ -609,6 +663,7 @@ class RoomManager {
   startGame(room) {
     this.clearPhase(room);
     this.clearBotTimers(room);
+    this.clearAutoPassTimer(room);
     const ready = this.players(room).filter((p) => p.ready && !p.spectator);
 
     // Social order: previous finishing order, or a draw for the first hand.
@@ -904,7 +959,7 @@ class RoomManager {
     this.clearPhase(room);
     room.game.state = game_state.PLAYING;
     this.broadcastRoom(room);
-    this.scheduleNextBotTurn(room);
+    this.advanceTurn(room);
   }
 
   // ---- play ---------------------------------------------------------------
@@ -935,7 +990,7 @@ class RoomManager {
       socket.emit("chat announce", "language.passed", "black", me.nickname);
       game.nextPlayer({}, null, room);
       this.broadcastRoom(room);
-      this.scheduleNextBotTurn(room);
+      this.advanceTurn(room);
       return;
     }
 
@@ -974,7 +1029,7 @@ class RoomManager {
     // finisher as the winner) until the next play replaces it.
     if (game.shown) game.shown.handCount = me.hand.length;
     this.broadcastRoom(room);
-    this.scheduleNextBotTurn(room);
+    this.advanceTurn(room);
   }
 
   finishGame(room) {
@@ -993,6 +1048,7 @@ class RoomManager {
 
     this.io.to(room.name).emit("chat announce", "language.ended", "red");
     this.clearBotTimers(room);
+    this.clearAutoPassTimer(room);
     room.game.end();
     for (const p of this.players(room)) p.reset();
     // Bots never send a ready event, so re-arm them for the next hand.

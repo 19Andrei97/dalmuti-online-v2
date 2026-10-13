@@ -304,3 +304,77 @@ test("without the house rule the first hand still taxes", () => {
     "a Greater Dalmuti is still seated"
   );
 });
+
+// ---- auto-pass of a player with no legal answer ---------------------------
+
+// A PLAYING room with `b` on turn and a known field on the table.
+function playingRoom(manager, hands, last) {
+  const order = ["a", "b", "c", "d", "e"];
+  const room = setupRoom(manager, order, hands);
+  room.game.state = game_state.PLAYING;
+  room.game.last = last;
+  room.game.cur_order_idx = 1; // b to act
+  return room;
+}
+
+test("a human with no legal play is auto-passed after the grace period", async () => {
+  const { io, manager } = makeManager();
+  manager.autoPassDelayMs = 20;
+  // A field of a single 1: only a strictly lower rank could answer it, so b's 9
+  // has no move at all.
+  const room = playingRoom(
+    manager,
+    { a: [1, 2], b: [9], c: [5, 6], d: [7, 8], e: [4, 4] },
+    { num: 1, count: 1, by: "a", handCount: 1, cards: [1] }
+  );
+
+  manager.scheduleAutoPass(room);
+  assert.ok(manager.autoPassTimers.has(room.name), "a pass is queued for b");
+
+  await new Promise((r) => setTimeout(r, 70));
+  assert.equal(room.game.cur_order[1], 0, "b is marked as passed");
+  assert.equal(room.game.cur_order_idx, 2, "turn moved on to c");
+  const announce = io.events.find(
+    (e) => e.event === "chat announce" && e.args[0] === "language.autoPassed"
+  );
+  assert.ok(announce, "an auto-pass notice is broadcast");
+  assert.equal(announce.args[2], "B", "the notice names the passed player");
+});
+
+test("a player who can still answer keeps their turn (no auto-pass)", async () => {
+  const { io, manager } = makeManager();
+  manager.autoPassDelayMs = 20;
+  // b's 4 beats a field of 8, so b has a legal play and must not be skipped.
+  const room = playingRoom(
+    manager,
+    { a: [1, 2], b: [4], c: [5, 6], d: [7, 8], e: [4, 4] },
+    { num: 8, count: 1, by: "a", handCount: 1, cards: [8] }
+  );
+
+  manager.scheduleAutoPass(room);
+  assert.equal(manager.autoPassTimers.has(room.name), false, "no timer for a playable turn");
+
+  await new Promise((r) => setTimeout(r, 60));
+  assert.equal(room.game.cur_order[1], 1, "b has not passed");
+  assert.equal(room.game.cur_order_idx, 1, "b keeps the turn");
+  assert.equal(
+    io.events.some((e) => e.args && e.args[0] === "language.autoPassed"),
+    false,
+    "no auto-pass notice"
+  );
+});
+
+test("a bot is never auto-passed by the human path", () => {
+  const { manager } = makeManager();
+  manager.autoPassDelayMs = 20;
+  const room = playingRoom(
+    manager,
+    { a: [1, 2], b: [9], c: [5, 6], d: [7, 8], e: [4, 4] },
+    { num: 1, count: 1, by: "a", handCount: 1, cards: [1] }
+  );
+  room.sockets.b.isBot = true;
+
+  manager.scheduleAutoPass(room);
+  assert.equal(manager.autoPassTimers.has(room.name), false, "bots schedule themselves");
+});
+

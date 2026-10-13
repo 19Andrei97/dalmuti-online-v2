@@ -92,6 +92,18 @@ The client was migrated from hand-written CSS/JS to a small build toolchain:
   `hasLegalPlay(hand, last)` (in `client-rules.ts`, also cross-checked against
   `checkRule`) is false when no set or Joker pair can answer the field, and then
   the pass fires straight away.
+- Current-turn highlight: `setPlayable` puts `.currentTurn` on the acting seat.
+  The rule must stay **after** `.seat` in `tailwind.css` — both live in the
+  components layer, so `.seat`'s own `box-shadow`/`background-image` would win
+  at equal specificity and hide the glow (`app.css` shows `.currentTurn` last).
+- Auto-pass: when the player on turn holds no legal answer, the server passes
+  them after `autoPassDelayMs` (default 5 s). All turn hand-offs go through
+  `advanceTurn` (bot timer + `scheduleAutoPass`); the timer re-checks turn
+  ownership and playability when it fires, and is cleared on `startGame`,
+  room teardown and `finishGame`. The client mirrors the decision in
+  `updateAutoPass` (server stays authoritative) and shows a countdown in
+  `#turn-hint` (`autoPassIn` i18n key). The server `hasLegalPlay` is
+  cross-checked against `checkRule` in `test/game-engine.test.js`.
 - Create room: Enter in the name field submits (the dialog form uses
   `method="dialog"`, so `keydown` calls `preventDefault` to avoid closing before
   the emit). An empty name is allowed and a friendly one is generated

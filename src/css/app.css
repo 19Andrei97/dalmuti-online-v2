@@ -1254,16 +1254,6 @@ video {
   color: rgb(244 241 222 / var(--tw-text-opacity, 1));
 }
 
-  .currentTurn {
-  --tw-ring-offset-shadow: var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width) var(--tw-ring-offset-color);
-  --tw-ring-shadow: var(--tw-ring-inset) 0 0 0 calc(2px + var(--tw-ring-offset-width)) var(--tw-ring-color);
-  box-shadow: var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow, 0 0 #0000);
-  --tw-ring-opacity: 1;
-  --tw-ring-color: rgb(201 162 39 / var(--tw-ring-opacity, 1));
-    box-shadow: 0 0 18px rgba(201, 162, 39, 0.55);
-    background-image: linear-gradient(180deg, rgba(201, 162, 39, 0.16), rgba(201, 162, 39, 0.05));
-}
-
   /* The recipient's own seat: a bright outline + crown mark so they can find
    * themselves at a glance. Uses `outline` (not ring/box-shadow) so it does not
    * clobber the current-turn glow when it is also their turn. */
@@ -1361,6 +1351,19 @@ video {
   flex-direction: column;
   align-items: center;
   gap: 0.125rem;
+}
+
+  /* The player whose turn it is: a gold ring and a soft glow. Declared after
+   * `.seat` on purpose — both live in the components layer, so `.seat`'s own
+   * `box-shadow`/`background-image` would otherwise win and hide the highlight. */
+  .currentTurn {
+  --tw-ring-offset-shadow: var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width) var(--tw-ring-offset-color);
+  --tw-ring-shadow: var(--tw-ring-inset) 0 0 0 calc(2px + var(--tw-ring-offset-width)) var(--tw-ring-color);
+  box-shadow: var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow, 0 0 #0000);
+  --tw-ring-opacity: 1;
+  --tw-ring-color: rgb(201 162 39 / var(--tw-ring-opacity, 1));
+    box-shadow: 0 0 18px rgba(201, 162, 39, 0.55);
+    background-image: linear-gradient(180deg, rgba(201, 162, 39, 0.16), rgba(201, 162, 39, 0.05));
 }
 
   /* Chat/score sidebar: a bottom sheet on phones, a column on wide screens. */
@@ -2010,6 +2013,9 @@ video {
   }
   .flip-inner.active {
     transform: rotateY(180deg);
+  }
+  .flip-inner.\!active {
+    transform: rotateY(180deg) !important;
   }
   .flip-face {
     backface-visibility: hidden;

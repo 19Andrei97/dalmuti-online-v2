@@ -19,6 +19,7 @@ const {
   removeCards,
   revolutionCandidates,
   reverseOrder,
+  hasLegalPlay,
   Game,
   game_state,
   ROLE,
@@ -58,6 +59,51 @@ test("checkValidity only allows cards that are actually held", () => {
   assert.equal(checkValidity([1, 2, 2, 3], { 2: 2 }), true);
   assert.equal(checkValidity([1, 2, 2, 3], { 2: 3 }), false);
   assert.equal(checkValidity([1, 2, 2, 3], { 5: 1 }), false);
+});
+
+test("hasLegalPlay: a player who cannot answer the field has no play", () => {
+  // Leading is always playable (the leader must play).
+  assert.equal(hasLegalPlay([9, 9], null), true);
+  // A one-card field: any strictly lower rank answers; a Joker (13) never does.
+  assert.equal(hasLegalPlay([4, 9], { num: 6, count: 1 }), true);
+  assert.equal(hasLegalPlay([7, 9], { num: 6, count: 1 }), false);
+  assert.equal(hasLegalPlay([JOKER], { num: 12, count: 1 }), false);
+  // A two-card field: a lower pair, or a lower rank plus the Joker.
+  assert.equal(hasLegalPlay([5, 5, 9], { num: 8, count: 2 }), true);
+  assert.equal(hasLegalPlay([7, JOKER], { num: 8, count: 2 }), true);
+  assert.equal(hasLegalPlay([9, JOKER], { num: 8, count: 2 }), false);
+  // A three-card field needs three copies; a Joker pair can never match it.
+  assert.equal(hasLegalPlay([3, 3], { num: 8, count: 3 }), false);
+  assert.equal(hasLegalPlay([3, 3, 3], { num: 8, count: 3 }), true);
+  assert.equal(hasLegalPlay([JOKER, JOKER], { num: 8, count: 2 }), false);
+});
+
+test("hasLegalPlay agrees with checkRule for every field", () => {
+  const hands = [
+    [1, 2, 3, 4, 5, 6, 7, 8],
+    [5, 5, 5, 9, 9],
+    [JOKER, 2, 12, 12],
+    [7, 7, 7, 7],
+  ];
+  for (let num = 1; num <= JOKER; num++) {
+    for (let count = 1; count <= 4; count++) {
+      const last = { num, count, by: "x" };
+      for (const hand of hands) {
+        const counts = new Map();
+        for (const card of hand) counts.set(card, (counts.get(card) ?? 0) + 1);
+
+        let legal = [...counts].some(
+          ([r, have]) => r !== JOKER && have >= count && checkRule(last, { [r]: count })
+        );
+        if (!legal && count === 2 && (counts.get(JOKER) ?? 0) >= 1) {
+          legal = [...counts].some(
+            ([r, have]) => r !== JOKER && have >= 1 && checkRule(last, { [JOKER]: 1, [r]: 1 })
+          );
+        }
+        assert.equal(hasLegalPlay(hand, last), legal, `field ${count}x${num} hand [${hand}]`);
+      }
+    }
+  }
 });
 
 test("checkRule: leading rules", () => {

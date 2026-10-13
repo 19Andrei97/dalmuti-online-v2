@@ -31,6 +31,7 @@ export interface Language {
   pass: string;
   play: string;
   yourTurn: string;
+  autoPassIn: string;
   started: string;
   passed: string;
   finished: string;

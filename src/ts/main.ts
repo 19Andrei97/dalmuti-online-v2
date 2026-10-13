@@ -17,6 +17,9 @@ import { SelectionModel } from "./selection";
 import { classifyMove, fieldCount, hasLegalPlay, playableRanks } from "./client-rules";
 import { GameState, JOKER, type AuthInfo, type LobbyView, type RoomData, type Role } from "./types";
 
+// Must match the server's autoPassDelayMs so the visible countdown lines up.
+const AUTO_PASS_MS = 5000;
+
 const CARD_CLASS: readonly string[] = [
   "dalmuti",
   "archbishop",
@@ -44,6 +47,9 @@ interface Session {
   lastPlayedKey: string | null;
   handKey: string | null;
   taxKey: string | null;
+  autoPassKey: string | null;
+  autoPassTimer: number | null;
+  autoPassEnds: number;
 }
 
 function cardClass(value: number): string {
@@ -74,6 +80,9 @@ async function boot(): Promise<void> {
     lastPlayedKey: null,
     handKey: null,
     taxKey: null,
+    autoPassKey: null,
+    autoPassTimer: null,
+    autoPassEnds: 0,
   };
 
   applyStaticTranslations(lang);
@@ -637,11 +646,55 @@ function setPlayable(session: Session, data: RoomData): void {
   }
 
   const hint = maybeById("turn-hint");
+  const myTurnOnlyPass =
+    myTurn && data.last && data.last.num ? !hasLegalPlay(data.hand, data.last) : false;
   if (hint) {
     show(hint, data.state === GameState.PLAYING && myTurn);
-    hint.textContent = myTurn ? session.lang.yourTurn : "";
+    if (!myTurn) hint.textContent = "";
+    else if (!myTurnOnlyPass) hint.textContent = session.lang.yourTurn;
   }
+  updateAutoPass(session, myTurn, myTurnOnlyPass);
   if (myTurn) updatePlayButton(session);
+}
+
+// When the player on turn has no legal answer, the server passes them after 5 s.
+// Show a matching countdown so the wait is explained; the client only mirrors the
+// server's decision (it can never pass on its own).
+function updateAutoPass(session: Session, myTurn: boolean, onlyPass: boolean): void {
+  const hint = maybeById("turn-hint");
+  const active = myTurn && onlyPass;
+  const key = `${active ? 1 : 0}:${session.room ? session.room.cur_order_idx : -1}`;
+  if (key === session.autoPassKey) return;
+  session.autoPassKey = key;
+
+  if (session.autoPassTimer !== null) {
+    window.clearInterval(session.autoPassTimer);
+    session.autoPassTimer = null;
+  }
+  if (hint) {
+    hint.classList.toggle("text-herald", active);
+    hint.classList.toggle("text-gold-light", !active);
+  }
+  if (!active || !session.room) {
+    if (hint && myTurn) hint.textContent = session.lang.yourTurn;
+    return;
+  }
+
+  session.autoPassEnds = Date.now() + AUTO_PASS_MS;
+  const paint = (): void => {
+    if (!hint) return;
+    const left = Math.max(0, Math.ceil((session.autoPassEnds - Date.now()) / 1000));
+    hint.textContent = `${session.lang.yourTurn} — ${session.lang.autoPassIn} ${left}…`;
+  };
+  paint();
+  session.autoPassTimer = window.setInterval(() => {
+    if (!hint || hint.classList.contains("hidden")) {
+      window.clearInterval(session.autoPassTimer as number);
+      session.autoPassTimer = null;
+      return;
+    }
+    paint();
+  }, 250);
 }
 
 function renderSlots(session: Session, data: RoomData): void {

@@ -386,12 +386,6 @@
     @apply ml-1 rounded bg-royal-light px-1 align-middle text-[0.6rem] font-bold text-parchment;
   }
 
-  .currentTurn {
-    @apply ring-2 ring-gold;
-    box-shadow: 0 0 18px rgba(201, 162, 39, 0.55);
-    background-image: linear-gradient(180deg, rgba(201, 162, 39, 0.16), rgba(201, 162, 39, 0.05));
-  }
-
   /* The recipient's own seat: a bright outline + crown mark so they can find
    * themselves at a glance. Uses `outline` (not ring/box-shadow) so it does not
    * clobber the current-turn glow when it is also their turn. */
@@ -447,6 +441,15 @@
   }
   .seat-body {
     @apply relative z-10 flex flex-col items-center gap-0.5;
+  }
+
+  /* The player whose turn it is: a gold ring and a soft glow. Declared after
+   * `.seat` on purpose — both live in the components layer, so `.seat`'s own
+   * `box-shadow`/`background-image` would otherwise win and hide the highlight. */
+  .currentTurn {
+    @apply ring-2 ring-gold;
+    box-shadow: 0 0 18px rgba(201, 162, 39, 0.55);
+    background-image: linear-gradient(180deg, rgba(201, 162, 39, 0.16), rgba(201, 162, 39, 0.05));
   }
 
   /* Chat/score sidebar: a bottom sheet on phones, a column on wide screens. */
