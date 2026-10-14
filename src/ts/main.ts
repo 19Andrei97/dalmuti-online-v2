@@ -990,7 +990,22 @@ function renderField(session: Session, data: RoomData): void {
     }
   }
   if (who) who.classList.toggle("who-won", finished || !!last.trickOver);
-  if (!rebuild) return;
+
+  // The winning play stays visible only while the trick is active. Once a trick has
+  // been won or a hand has finished, the table must be cleared so the next player
+  // clearly sees a fresh lead instead of a stale follow.
+  if (!rebuild) {
+    if (finished || !!last.trickOver) {
+      clear(field);
+      if (empty) {
+        empty.textContent = session.lang.newTrick;
+        show(empty, true);
+      }
+      session.fieldCardsKey = "empty";
+      session.lastPlayedKey = "empty";
+    }
+    return;
+  }
 
   for (let i = 0; i < last.count; i++) {
     // Show the card actually played: a Joker stays a Joker even when it stood in
