@@ -31,7 +31,7 @@ esbuild.buildSync({
 });
 
 const client = await import(pathToFileURL(outfile).href);
-const { playableRanks, classifyMove, fieldCount, hasLegalPlay, SelectionModel } = client;
+const { playableRanks, classifyMove, fieldCount, hasLegalPlay, playButtonDisabled, SelectionModel } = client;
 
 const JOKER = 13;
 
@@ -224,6 +224,22 @@ test("hasLegalPlay agrees with checkRule: playable iff some legal play exists", 
 test("fieldCount reports the cards a follow must match", () => {
   assert.equal(fieldCount(null), 0);
   assert.equal(fieldCount({ num: 4, count: 3, by: "x" }), 3);
+});
+
+test("the Play/Pass button is inert off-turn", () => {
+  assert.equal(playButtonDisabled(false, false, false), true, "off-turn with no pick");
+  assert.equal(playButtonDisabled(false, true, false), true, "off-turn with a pick");
+  assert.equal(playButtonDisabled(false, true, true), true, "off-turn while leading");
+});
+
+test("the button cannot pass while leading, but a pick turns it into Play", () => {
+  // Leading on your turn: an empty selection must not offer a pass.
+  assert.equal(playButtonDisabled(true, false, true), true, "cannot pass an empty field");
+  // Picking cards makes the same press a legal lead.
+  assert.equal(playButtonDisabled(true, true, true), false, "a pick enables Play");
+  // Following: an empty selection is the Pass action, which is allowed.
+  assert.equal(playButtonDisabled(true, false, false), false, "pass is allowed on a follow");
+  assert.equal(playButtonDisabled(true, true, false), false, "a follow pick enables Play");
 });
 
 test("playableRanks agrees with the server engine for every field", async () => {

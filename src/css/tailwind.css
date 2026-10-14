@@ -429,6 +429,24 @@
   .session-over {
     animation: hand-finished-in 0.35s ease-out both;
   }
+
+  /* Revolution banner: a louder, self-hiding flash when a revolution resolves.
+   * Same hidden-beating pattern as the banners above. */
+  .revolution-banner:not(.hidden) {
+    display: flex;
+  }
+  .revolution-banner {
+    animation: revolution-in 0.5s cubic-bezier(0.2, 1.4, 0.4, 1) both;
+  }
+  .revolution-banner-greater {
+    background-color: theme("colors.gold.dark");
+    border-color: theme("colors.gold.light");
+  }
+  @keyframes revolution-in {
+    0% { opacity: 0; transform: scale(0.6); }
+    60% { opacity: 1; transform: scale(1.06); }
+    100% { opacity: 1; transform: scale(1); }
+  }
   @keyframes hand-finished-in {
     from { opacity: 0; transform: translateY(-6px); }
     to { opacity: 1; transform: none; }

@@ -64,6 +64,8 @@
     "noRevolution": "No revolution was declared.",
     "revolution": "called a revolution! Taxes are cancelled.",
     "greaterRevolution": "called a GREATER REVOLUTION! Everyone swaps places.",
+    "revolutionBanner": "REVOLUTION!",
+    "greaterRevolutionBanner": "GREATER REVOLUTION!",
     "revolutionPrompt": "You hold both Jokers. Declare a revolution to cancel the taxes?",
     "revolutionPromptGreater": "You hold both Jokers as Greater Peon. Declare a GREATER REVOLUTION to swap everyone's places?",
     "taxPeonPrompt": "Your best cards are given to the Dalmuti automatically.",

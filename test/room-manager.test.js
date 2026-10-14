@@ -467,6 +467,7 @@ test("reconnection restores the same seat and hand", async () => {
     const room = ctx.server.manager.rooms.open[roomName];
     const token = room.sockets[a.id].token;
     const seat = room.sockets[a.id].seat;
+    const name = room.sockets[a.id].nickname;
     room.sockets[a.id].hand = [3, 4, 5];
 
     a.close();
@@ -480,6 +481,7 @@ test("reconnection restores the same seat and hand", async () => {
     assert.ok(restored, "player reattached");
     assert.equal(restored.seat, seat);
     assert.deepEqual(restored.hand, [3, 4, 5]);
+    assert.equal(restored.nickname, name, "the display name survives the reconnect");
     a2.close();
     b.close();
   } finally {

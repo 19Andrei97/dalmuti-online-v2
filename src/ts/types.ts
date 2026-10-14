@@ -59,6 +59,12 @@ export interface RevolutionPhase {
   deadline: number;
 }
 
+/** Broadcast once a revolution actually resolves; `nickname` is the caller. */
+export interface RevolutionDeclared {
+  greater: boolean;
+  nickname: string;
+}
+
 export type Phase =
   | { type: "tax"; deadline: number; taxes: unknown[]; submissions: Record<string, unknown> }
   | { type: "revolution"; greater: boolean; deadline: number }

@@ -70,6 +70,12 @@ The client was migrated from hand-written CSS/JS to a small build toolchain:
 
 ## Client UX notes
 
+- Guest identity: the client generates a friendly name once and stores it in
+  `localStorage.nickname` (`guestNickname()` in `main.ts`); a refresh therefore
+  keeps the same name instead of the server handing out a new `GuestN`. The
+  server still assigns `Guest<connectNumber>` on connect, but the client
+  overrides it via `set new nickname`. `reconnect` also carries the previous
+  `nickname` so a reconnected room never flashes the default name.
 - Card selection (`src/ts/selection.ts`): a plain click/tap toggles a rank,
   selecting as many copies as the table demands (`fieldCount`): with two cards on
   the table one click picks two copies of that rank when you hold them, three
@@ -91,7 +97,12 @@ The client was migrated from hand-written CSS/JS to a small build toolchain:
 - The pass button only asks for confirmation when a card could still be played:
   `hasLegalPlay(hand, last)` (in `client-rules.ts`, also cross-checked against
   `checkRule`) is false when no set or Joker pair can answer the field, and then
-  the pass fires straight away.
+  the pass fires straight away. While **leading** (empty table) the button is
+  *disabled* with an empty selection — the server rejects a pass on an empty
+  field, so the client must not offer one. `playButtonDisabled(myTurn,
+  hasSelection, tableEmpty)` in `client-rules.ts` owns that decision (unit-tested
+  in `test/client-selection.test.js`); selecting a card switches the button to
+  Play and re-enables it.
 - Current-turn highlight: `setPlayable` puts `.currentTurn` on the acting seat.
   The rule must stay **after** `.seat` in `tailwind.css` — both live in the
   components layer, so `.seat`'s own `box-shadow`/`background-image` would win
@@ -165,6 +176,12 @@ if they go out).
   normally.
 - Revolution: a player dealt both Jokers may declare it (Greater Peon ⇒ Greater
   Revolution reverses the whole order); it cancels taxes and starts play.
+  `resolveRevolution` names the caller in the `chat announce` (the key text reads
+  "{name} called a revolution…") and broadcasts `revolution declared`
+  `{ greater, nickname }`; the client flashes a self-hiding `#revolution-banner`
+  (`revolutionBanner` / `greaterRevolutionBanner` i18n, `.revolution-banner` CSS
+  with the same `:not(.hidden)` display pattern as `.hand-finished`). The banner
+  only declares the revolution — the chat line names who called it.
 - Taxes are one-sided: the Peon's tribute is automatic (the lowest non-Joker
   cards, never a Joker) and the Peon is merely notified (`tax owed`, then a
   `tax result` confirmation). Only the Dalmuti chooses the cards to return

@@ -120,6 +120,60 @@ test("declining a revolution falls through to the tax phase", () => {
   assert.equal(room.phase.type, "tax");
 });
 
+test("a declared revolution names the caller in chat and broadcasts a banner", () => {
+  const { io, manager } = makeManager();
+  const order = ["a", "b", "c", "d", "e"];
+  const hands = { a: [1], b: [2], c: [JOKER, JOKER], d: [4], e: [5] };
+  const room = setupRoom(manager, order, hands);
+  io.events.length = 0;
+  manager.resolveRevolution(room, { sid: "c", greater: false });
+
+  const announce = io.events.find(
+    (e) => e.event === "chat announce" && e.args[0] === "language.revolution"
+  );
+  assert.ok(announce, "the revolution is announced in chat");
+  assert.equal(announce.args[2], "C", "the chat line names the caller");
+
+  const banner = io.events.find((e) => e.event === "revolution declared");
+  assert.ok(banner, "a banner event is broadcast to the room");
+  assert.deepEqual(banner.args[0], { greater: false, nickname: "C" });
+});
+
+test("a greater revolution names the caller and flags the banner as greater", () => {
+  const { io, manager } = makeManager();
+  const order = ["a", "b", "c", "d", "e"];
+  const hands = { a: [1], b: [2], c: [3], d: [4], e: [JOKER, JOKER] };
+  const room = setupRoom(manager, order, hands);
+  io.events.length = 0;
+  manager.resolveRevolution(room, { sid: "e", greater: true });
+
+  const announce = io.events.find(
+    (e) => e.event === "chat announce" && e.args[0] === "language.greaterRevolution"
+  );
+  assert.equal(announce.args[2], "E", "the chat line names the caller");
+
+  const banner = io.events.find((e) => e.event === "revolution declared");
+  assert.deepEqual(banner.args[0], { greater: true, nickname: "E" });
+});
+
+test("a declined revolution never broadcasts a banner", () => {
+  const { io, manager } = makeManager();
+  const order = ["a", "b", "c", "d", "e"];
+  const hands = { a: [1], b: [2], c: [3], d: [4], e: [5] };
+  const room = setupRoom(manager, order, hands);
+  io.events.length = 0;
+  manager.resolveRevolution(room, null);
+
+  assert.equal(
+    io.events.some((e) => e.event === "revolution declared"),
+    false,
+    "no banner when no one declared"
+  );
+  assert.ok(
+    io.events.some((e) => e.event === "chat announce" && e.args[0] === "language.noRevolution")
+  );
+});
+
 test("taxes: only the Dalmuti chooses, the Peon's tribute is automatic", () => {
   const { manager } = makeManager();
   const order = ["a", "b", "c", "d", "e"];

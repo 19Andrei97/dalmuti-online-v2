@@ -14,7 +14,7 @@ import { loadLanguage, resolveMessage, type Language } from "./i18n";
 import { applyLanguageUI, wireLanguageMenu } from "./lang-menu";
 import { connect, type TypedSocket } from "./socket";
 import { SelectionModel } from "./selection";
-import { classifyMove, fieldCount, hasLegalPlay, playableRanks } from "./client-rules";
+import { classifyMove, fieldCount, hasLegalPlay, playButtonDisabled, playableRanks } from "./client-rules";
 import { GameState, JOKER, type AuthInfo, type LobbyView, type PlayerView, type RoomData, type Role } from "./types";
 
 // Must match the server's autoPassDelayMs so the visible countdown lines up.
@@ -51,6 +51,7 @@ interface Session {
   autoPassKey: string | null;
   autoPassTimer: number | null;
   autoPassEnds: number;
+  revolutionBannerTimer: number | null;
 }
 
 function cardClass(value: number): string {
@@ -85,6 +86,7 @@ async function boot(): Promise<void> {
     autoPassKey: null,
     autoPassTimer: null,
     autoPassEnds: 0,
+    revolutionBannerTimer: null,
   };
 
   applyStaticTranslations(lang);
@@ -260,16 +262,36 @@ async function initAuth(session: Session): Promise<void> {
     return;
   }
 
-  const saved = localStorage.getItem("nickname");
-  if (saved) {
-    displayNickname(saved);
-    session.socket.emit("set new nickname", saved, currentRoomId());
-  }
+  // Reuse the saved guest name so a refresh (or a reconnect) keeps the same
+  // identity instead of being handed a brand-new "Guest" number each time.
+  const name = guestNickname();
+  displayNickname(name);
+  session.socket.emit("set new nickname", name, currentRoomId());
 }
 
 function displayNickname(name: string): void {
   const node = maybeById("nickname");
   if (node) node.textContent = name;
+}
+
+/* A friendly default identity. Generated once and persisted, so refreshing the
+ * page never renames the player. */
+const GUEST_ADJECTIVES = [
+  "Wandering", "Bold", "Silent", "Merry", "Swift", "Grim", "Proud", "Lucky",
+  "Wise", "Daring", "Nimble", "Stout",
+];
+const GUEST_NOUNS = [
+  "Bard", "Knight", "Squire", "Minstrel", "Pilgrim", "Falcon", "Wolf", "Raven",
+  "Bishop", "Hermit", "Jester", "Warden",
+];
+
+function guestNickname(): string {
+  const saved = localStorage.getItem("nickname");
+  if (saved) return saved;
+  const pick = <T>(list: readonly T[]): T => list[Math.floor(Math.random() * list.length)]!;
+  const name = `${pick(GUEST_ADJECTIVES)} ${pick(GUEST_NOUNS)}`;
+  localStorage.setItem("nickname", name);
+  return name;
 }
 
 /* ---- lobby ------------------------------------------------------------- */
@@ -495,6 +517,11 @@ function wireServerEvents(session: Session): void {
       info.greater ? session.lang.revolutionPromptGreater : session.lang.revolutionPrompt
     );
     toast(info.greater ? session.lang.revolutionPromptGreater : session.lang.revolutionPrompt);
+  });
+  // Broadcast when a revolution actually resolves. The chat line already names
+  // the caller; the banner just declares it, so it is not missed.
+  session.socket.on("revolution declared", (info) => {
+    renderRevolutionBanner(session, info.greater);
   });
   // Only the Dalmuti picks cards to return; the Peon's tribute is automatic.
   session.socket.on("tax phase", (info) => {
@@ -881,6 +908,7 @@ function updatePlayButton(session: Session): void {
   if (!rd) return;
   const selection = session.selection.selection();
   const hasSelection = Object.keys(selection).length > 0;
+  const tableEmpty = !(rd.last && rd.last.num);
 
   if (hasSelection) {
     btn.textContent = session.lang.play;
@@ -891,6 +919,12 @@ function updatePlayButton(session: Session): void {
     btn.classList.remove("btn-forest");
     btn.classList.add("btn-herald");
   }
+
+  // Disabled unless it is your turn and the press would do something: leading
+  // the table demands a play, so an empty selection cannot pass.
+  const cur = rd.state === GameState.PLAYING ? rd.cur_order_idx : -1;
+  const myTurn = Object.entries(rd.players).some(([sid, p]) => sid === rd.you && p.seat === cur);
+  btn.disabled = playButtonDisabled(myTurn, hasSelection, tableEmpty);
 }
 
 /** Click = toggle whole rank; Shift-click or long-press = one copy. */
@@ -1035,6 +1069,25 @@ function renderHandFinished(session: Session, data: RoomData): void {
   const out = !!me && !me.spectator && me.handCount === 0;
   setText(maybeById("hand-finished-text") ?? document.createElement("span"), session.lang.youWonHand);
   show(banner, out && data.state === GameState.PLAYING);
+}
+
+/* ---- revolution banner -------------------------------------------------- */
+
+/** Flash a room-wide banner when a revolution resolves; it hides itself. */
+function renderRevolutionBanner(session: Session, greater: boolean): void {
+  const banner = maybeById("revolution-banner");
+  if (!banner) return;
+  setText(
+    maybeById("revolution-banner-text") ?? document.createElement("span"),
+    greater ? session.lang.greaterRevolutionBanner : session.lang.revolutionBanner
+  );
+  banner.classList.toggle("revolution-banner-greater", greater);
+  show(banner, true);
+  if (session.revolutionBannerTimer !== null) window.clearTimeout(session.revolutionBannerTimer);
+  session.revolutionBannerTimer = window.setTimeout(() => {
+    show(banner, false);
+    session.revolutionBannerTimer = null;
+  }, 6000);
 }
 
 /* ---- session score ----------------------------------------------------- */

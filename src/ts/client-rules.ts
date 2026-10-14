@@ -57,6 +57,19 @@ export function fieldCount(last: LastPlay | null): number {
 }
 
 /**
+ * Whether the Play/Pass button must be disabled. It is inert off-turn, and while
+ * leading (empty table) an empty selection cannot pass — the server rejects a
+ * pass on an empty field, so the button must not offer one.
+ */
+export function playButtonDisabled(
+  myTurn: boolean,
+  hasSelection: boolean,
+  tableEmpty: boolean
+): boolean {
+  return !myTurn || (!hasSelection && tableEmpty);
+}
+
+/**
  * True when the player holds at least one legal answer to the field. Mirrors
  * `followsField`/`checkRule`: a set of `count` copies of a lower rank, or the
  * `{Joker, lower rank}` pair. Used to skip the pass confirmation when passing is

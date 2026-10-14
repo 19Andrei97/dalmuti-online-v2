@@ -66,6 +66,8 @@ export interface Language {
   noRevolution: string;
   revolution: string;
   greaterRevolution: string;
+  revolutionBanner: string;
+  greaterRevolutionBanner: string;
   revolutionPrompt: string;
   revolutionPromptGreater: string;
   taxPeonPrompt: string;

@@ -112,6 +112,13 @@
         <button id="reset-session-btn" type="button" class="btn btn-herald hidden">Reset scores</button>
       </div>
 
+      <!-- Revolution banner: flashes when a revolution is declared. The chat
+           names the caller, this just declares it. -->
+      <div id="revolution-banner" class="revolution-banner hidden items-center justify-center gap-3 rounded-md border-2 border-herald bg-herald/25 px-4 py-3 text-center">
+        <span aria-hidden="true">⚔️</span>
+        <span id="revolution-banner-text" class="font-display text-lg font-bold text-parchment"></span>
+      </div>
+
       <!-- Hand -->
       <div class="frame bg-parchment-dark/40 p-2">
         <div id="hand" class="card-row flex min-h-[130px] flex-wrap items-end justify-center gap-y-3 py-1 sm:min-h-[170px]"></div>

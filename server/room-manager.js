@@ -640,6 +640,9 @@ class RoomManager {
       socket.userData.points = previous.points;
       socket.userData.pointsReceived = previous.pointsReceived;
       socket.userData.spectator = previous.spectator;
+      // Carry the display name so the room never flashes the default guest name
+      // while the client re-sends its own (see initAuth on the client).
+      socket.userData.nickname = previous.nickname;
       // The host keeps host rights across a reconnect (new socket id).
       if (room.hostSid === previous.sid) room.hostSid = socket.id;
       if (room.game.roles && previous.sid) {
@@ -788,6 +791,9 @@ class RoomManager {
       return this.beginTaxPhase(room);
     }
 
+    const caller = room.sockets[declared.sid];
+    const nickname = caller ? caller.nickname : "";
+
     if (declared.greater) {
       room.game.socialOrder = engine.reverseOrder(room.game.socialOrder);
       room.game.roles = engine.computeRoles(room.game.socialOrder);
@@ -807,10 +813,17 @@ class RoomManager {
         room.game.cur_order[p.seat] = 1;
       });
       room.game.cur_order_idx = room.sockets[room.game.socialOrder[0]].seat;
-      this.io.to(room.name).emit("chat announce", "language.greaterRevolution", "red");
+      this.io
+        .to(room.name)
+        .emit("chat announce", "language.greaterRevolution", "red", nickname);
     } else {
-      this.io.to(room.name).emit("chat announce", "language.revolution", "orange");
+      this.io.to(room.name).emit("chat announce", "language.revolution", "orange", nickname);
     }
+    // A prominent, room-wide banner: the chat line names the caller, the banner
+    // just declares the revolution (see the client's renderRevolutionBanner).
+    this.io
+      .to(room.name)
+      .emit("revolution declared", { greater: declared.greater, nickname });
     // A revolution cancels taxation, so play begins immediately.
     this.beginPlaying(room);
   }

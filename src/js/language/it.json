@@ -64,6 +64,8 @@
     "noRevolution": "Nessuna rivoluzione dichiarata.",
     "revolution": "ha dichiarato una rivoluzione! Le tasse sono annullate.",
     "greaterRevolution": "ha dichiarato una GRANDE RIVOLUZIONE! Tutti cambiano posto.",
+    "revolutionBanner": "RIVOLUZIONE!",
+    "greaterRevolutionBanner": "GRANDE RIVOLUZIONE!",
     "revolutionPrompt": "Hai entrambi i Jolly. Dichiarare una rivoluzione per annullare le tasse?",
     "revolutionPromptGreater": "Hai entrambi i Jolly come Grande Peone. Dichiarare una GRANDE RIVOLUZIONE per scambiare i posti?",
     "taxPeonPrompt": "Le tue carte migliori vanno al Dalmuti automaticamente.",

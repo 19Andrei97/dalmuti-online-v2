@@ -2,6 +2,7 @@ import type {
   CardSelection,
   ChatConnection,
   LobbyView,
+  RevolutionDeclared,
   RevolutionPhase,
   RoomData,
   SenderView,
@@ -23,6 +24,7 @@ export interface ServerToClientEvents {
   "chat announce taxs": (key: string, color: string, paid: string, received: string) => void;
   "chat connection": (user: ChatConnection) => void;
   "revolution phase": (info: RevolutionPhase) => void;
+  "revolution declared": (info: RevolutionDeclared) => void;
   "tax phase": (info: TaxPhase) => void;
   "tax owed": (info: { kind: string; count: number; partner: string }) => void;
   "tax result": (info: { role: string; partner: string; sent: string; received: string }) => void;
