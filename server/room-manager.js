@@ -287,8 +287,15 @@ class RoomManager {
   attach(socket) {
     this.userCount++;
     const account = this.sessionUser(socket);
+    // The client passes its remembered name in the socket handshake, so a
+    // refresh reuses the same identity instead of the server briefly exposing a
+    // throwaway "GuestN" before the client re-sends its name.
+    const handshakeName =
+      socket.handshake && socket.handshake.auth
+        ? sanitizeNickname(socket.handshake.auth.nickname)
+        : null;
     socket.userData = new Player(
-      account ? account.username : "Guest" + this.connectNumber,
+      account ? account.username : handshakeName || "Guest" + this.connectNumber,
       "waiting room"
     );
     socket.userData.sid = socket.id;

@@ -58,8 +58,8 @@ export interface TypedSocket {
   off<K extends keyof ServerToClientEvents>(event: K, handler?: ServerToClientEvents[K]): void;
 }
 
-declare const io: () => unknown;
+declare const io: (opts?: { auth?: Record<string, string> }) => unknown;
 
-export function connect(): TypedSocket {
-  return io() as TypedSocket;
+export function connect(nickname: string): TypedSocket {
+  return io({ auth: { nickname } }) as TypedSocket;
 }

@@ -74,6 +74,7 @@ async function connect(port, opts = {}) {
     forceNew: true,
     reconnection: false,
     extraHeaders: cookie ? { Cookie: cookie } : {},
+    auth: opts.auth,
   });
   return new Promise((resolve, reject) => {
     socket.on("connect", () => resolve(socket));
@@ -565,6 +566,25 @@ test("healthz responds 200 without touching auth", async () => {
     const res = await fetch(`http://localhost:${ctx.port}/healthz`);
     assert.equal(res.status, 200);
     assert.deepEqual(await res.json(), { status: "ok" });
+  } finally {
+    await ctx.stop();
+  }
+});
+
+test("a guest name passed in the handshake is used from the first view", async () => {
+  const ctx = await startServer({ authEnabled: false });
+  try {
+    const socket = await connect(ctx.port, { anon: true, auth: { nickname: "Handshake Hal" } });
+    // `init` makes the server re-send the sender view with the current identity.
+    socket.emit("init");
+    const sender = await once(socket, "update sender");
+    assert.equal(sender.nickname, "Handshake Hal", "no throwaway GuestN is ever exposed");
+
+    // The client still re-sends its name, which must not change the identity.
+    socket.emit("set new nickname", "Handshake Hal", "");
+    await delay(20);
+    assert.equal(ctx.server.manager.userCount, 1);
+    socket.close();
   } finally {
     await ctx.stop();
   }

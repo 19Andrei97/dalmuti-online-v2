@@ -71,8 +71,13 @@ async function boot(): Promise<void> {
   const lang = await loadLanguage().catch(() => null);
   if (!lang) return;
 
+  // Resolve the remembered name before connecting so it can ride along in the
+  // socket handshake — the server then never exposes a throwaway "GuestN" while
+  // the client is still fetching /api/me.
+  const rememberedName = guestNickname();
+
   const session: Session = {
-    socket: connect(),
+    socket: connect(rememberedName),
     lang,
     room: null,
     authEnabled: false,
@@ -100,7 +105,7 @@ async function boot(): Promise<void> {
   if (reconnectToken) session.socket.emit("reconnect", reconnectToken);
   session.socket.emit("init");
 
-  await initAuth(session);
+  await initAuth(session, rememberedName);
 }
 
 /* ---- static translations ---------------------------------------------- */
@@ -240,7 +245,7 @@ function sendChat(session: Session): void {
 
 /* ---- auth -------------------------------------------------------------- */
 
-async function initAuth(session: Session): Promise<void> {
+async function initAuth(session: Session, rememberedName: string): Promise<void> {
   let data: AuthInfo;
   try {
     const res = await fetch("/api/me");
@@ -262,11 +267,10 @@ async function initAuth(session: Session): Promise<void> {
     return;
   }
 
-  // Reuse the saved guest name so a refresh (or a reconnect) keeps the same
-  // identity instead of being handed a brand-new "Guest" number each time.
-  const name = guestNickname();
-  displayNickname(name);
-  session.socket.emit("set new nickname", name, currentRoomId());
+  // Reuse the remembered guest name (already sent in the handshake) so a refresh
+  // (or a reconnect) keeps the same identity instead of a new "Guest" number.
+  displayNickname(rememberedName);
+  session.socket.emit("set new nickname", rememberedName, currentRoomId());
 }
 
 function displayNickname(name: string): void {

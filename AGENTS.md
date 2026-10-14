@@ -72,10 +72,13 @@ The client was migrated from hand-written CSS/JS to a small build toolchain:
 
 - Guest identity: the client generates a friendly name once and stores it in
   `localStorage.nickname` (`guestNickname()` in `main.ts`); a refresh therefore
-  keeps the same name instead of the server handing out a new `GuestN`. The
-  server still assigns `Guest<connectNumber>` on connect, but the client
-  overrides it via `set new nickname`. `reconnect` also carries the previous
-  `nickname` so a reconnected room never flashes the default name.
+  keeps the same name instead of the server handing out a new `GuestN`. The name
+  is resolved *before* connecting and passed in the socket handshake
+  (`connect(nickname)` → `io({ auth: { nickname } })`), which `attach` reads via
+  `sanitizeNickname(socket.handshake.auth.nickname)` — so the server never
+  briefly exposes a throwaway `GuestN` while the client is still fetching
+  `/api/me`. The client re-sends the same name with `set new nickname` (needed to
+  (re)join the current room), and `reconnect` carries the previous `nickname`.
 - Card selection (`src/ts/selection.ts`): a plain click/tap toggles a rank,
   selecting as many copies as the table demands (`fieldCount`): with two cards on
   the table one click picks two copies of that rank when you hold them, three
